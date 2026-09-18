@@ -216,8 +216,11 @@ wind64 = create_wind_field(
     lon,
     lat,
     [r64_ne, r64_se, r64_sw, r64_nw]
-)
 
+
+# MAPA INTERACTIVO
+
+from shapely.geometry import mapping
 # MAPA INTERACTIVO
 
 from shapely.geometry import mapping
@@ -228,7 +231,102 @@ m = folium.Map(
     tiles="OpenStreetMap"
 )
 
-...
+# Cono de pronóstico
+folium.GeoJson(
+    mapping(cone_geom),
+    style_function=lambda x: {
+        "fillColor": "white",
+        "color": "red",
+        "weight": 2,
+        "fillOpacity": 0.35
+    }
+).add_to(m)
+
+# Radio 34 kt
+folium.GeoJson(
+    mapping(wind34),
+    style_function=lambda x: {
+        "color": "green",
+        "weight": 2,
+        "fillOpacity": 0
+    }
+).add_to(m)
+
+# Radio 50 kt
+folium.GeoJson(
+    mapping(wind50),
+    style_function=lambda x: {
+        "color": "orange",
+        "weight": 2,
+        "fillOpacity": 0
+    }
+).add_to(m)
+
+# Radio 64 kt
+folium.GeoJson(
+    mapping(wind64),
+    style_function=lambda x: {
+        "color": "red",
+        "weight": 2,
+        "fillOpacity": 0
+    }
+).add_to(m)
+
+# Trayectoria
+folium.PolyLine(
+    locations=list(zip(track_lats, track_lons)),
+    color="black",
+    weight=2,
+    dash_array="8, 8"
+).add_to(m)
+
+# Puntos de pronóstico
+for h, tx, ty in zip(forecast_hours, track_lons, track_lats):
+    folium.CircleMarker(
+        location=[ty, tx],
+        radius=5,
+        color="black",
+        fill=True,
+        fill_opacity=1,
+        popup=f"Pronóstico: +{h} horas"
+    ).add_to(m)
+
+# Centro actual
+folium.CircleMarker(
+    location=[lat, lon],
+    radius=8,
+    color="red",
+    fill=True,
+    fill_color="red",
+    fill_opacity=1,
+    popup=f"{name} — {wind_speed} kt"
+).add_to(m)
+
+# Ajustar vista
+m.fit_bounds([
+    [min(track_lats) - 6, min(track_lons) - 6],
+    [max(track_lats) + 6, max(track_lons) + 6]
+])
+
+# Crear las dos columnas
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    map_data = st_folium(
+        m,
+        width=None,
+        height=600
+    )
+
+    if map_data and map_data.get("last_clicked"):
+        clicked_lat = map_data["last_clicked"]["lat"]
+        clicked_lon = map_data["last_clicked"]["lng"]
+
+        st.info(
+            f"📍 Punto seleccionado: "
+            f"{clicked_lat:.4f}°N, "
+            f"{abs(clicked_lon):.4f}°W"
+        )
 
 with col2:
     st.subheader("Boletín de Advertencia")
