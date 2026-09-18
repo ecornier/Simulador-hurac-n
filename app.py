@@ -13,8 +13,23 @@ st.title("🌀 Simulador Académico de Huracanes (Estilo NHC)")
 st.sidebar.header("Parámetros del Ciclón")
 
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
-lat = st.sidebar.slider("Latitud Inicial (°N)", min_value=10.0, max_value=35.0, value=20.0, step=0.1)
-lon = st.sidebar.slider("Longitud Inicial (°W)", min_value=-98.0, max_value=-40.0, value=-70.0, step=0.1)
+lat = lat = st.sidebar.number_input(
+    "Latitud Inicial (°N)",
+    min_value=10.0,
+    max_value=35.0,
+    value=20.0,
+    step=0.0001,
+    format="%.4f"
+)
+
+lon = st.sidebar.number_input(
+    "Longitud Inicial (°W)",
+    min_value=-98.0,
+    max_value=-40.0,
+    value=-70.0,
+    step=0.0001,
+    format="%.4f"
+)
 wind_speed = st.sidebar.slider("Vientos Sostenidos (nudos)", min_value=30, max_value=165, value=75, step=5)
 heading = st.sidebar.slider("Rumbo (°)", min_value=0, max_value=360, value=290, step=5)
 forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
