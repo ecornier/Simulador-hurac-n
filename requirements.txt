@@ -1,0 +1,10 @@
+streamlit
+matplotlib
+cartopy
+shapely
+numpy
+   
+   
+   
+   
+   
