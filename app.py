@@ -212,65 +212,23 @@ wind64 = create_wind_field(
     lat,
     [r64_ne, r64_se, r64_sw, r64_nw]
 )
-fig = plt.figure(figsize=(10, 6))
-ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-
-margin = 6.0
-ax.set_extent([min(track_lons) - margin, max(track_lons) + margin, 
-               min(track_lats) - margin, max(track_lats) + margin], 
-              crs=ccrs.PlateCarree())
-
-ax.add_feature(cfeature.LAND, facecolor="#e8e4d9")
-ax.add_feature(cfeature.OCEAN, facecolor="#bfe2f7")
-ax.add_feature(cfeature.COASTLINE, linewidth=0.8, edgecolor="#555555")
-ax.add_feature(cfeature.BORDERS, linestyle=":", edgecolor="#777777")
-ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, color="gray", alpha=0.3)
-
-ax.add_geometries([cone_geom], crs=ccrs.PlateCarree(), facecolor="white", edgecolor="red", alpha=0.45, linewidth=1.2)
-# Wind Radii 34 kt
-ax.add_geometries(
-    [wind34],
-    crs=ccrs.PlateCarree(),
-    facecolor="none",
-    edgecolor="green",
-    linewidth=1.5,
-    alpha=0.9
+wind64 = create_wind_field(
+    lon,
+    lat,
+    [r64_ne, r64_se, r64_sw, r64_nw]
 )
 
-# Wind Radii 50 kt
-ax.add_geometries(
-    [wind50],
-    crs=ccrs.PlateCarree(),
-    facecolor="none",
-    edgecolor="orange",
-    linewidth=1.5,
-    alpha=0.9
+# MAPA INTERACTIVO
+
+from shapely.geometry import mapping
+
+m = folium.Map(
+    location=[lat, lon],
+    zoom_start=5,
+    tiles="OpenStreetMap"
 )
 
-# Wind Radii 64 kt
-ax.add_geometries(
-    [wind64],
-    crs=ccrs.PlateCarree(),
-    facecolor="none",
-    edgecolor="red",
-    linewidth=1.7,
-    alpha=0.9
-)
-
-ax.plot(track_lons, track_lats, color="black", linestyle="--", linewidth=1.5, transform=ccrs.PlateCarree(), label="Pronóstico")
-ax.scatter(track_lons, track_lats, color="black", s=30, zorder=5, transform=ccrs.PlateCarree())
-ax.plot(lon, lat, marker="o", color="red", markersize=9, transform=ccrs.PlateCarree(), label="Centro Actual")
-
-for h, tx, ty in zip(forecast_hours, track_lons, track_lats):
-    ax.text(tx + 0.3, ty + 0.3, f"{h}h", transform=ccrs.PlateCarree(), fontsize=8, weight="bold")
-
-ax.set_title(f"Centro Nacional de Huracanes (NHC) - Cono de Pronóstico\n{name} - Vientos: {wind_speed} kt ({category_str})", fontsize=11, weight="bold")
-ax.legend(loc="lower left", fontsize=8)
-
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.pyplot(fig)
+...
 
 with col2:
     st.subheader("Boletín de Advertencia")
