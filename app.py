@@ -18,7 +18,29 @@ lon = st.sidebar.slider("Longitud Inicial (°W)", min_value=-98.0, max_value=-40
 wind_speed = st.sidebar.slider("Vientos Sostenidos (nudos)", min_value=30, max_value=165, value=75, step=5)
 heading = st.sidebar.slider("Rumbo (°)", min_value=0, max_value=360, value=290, step=5)
 forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
-def get_category(wind): 
+st.sidebar.markdown("---")
+st.sidebar.header("Wind Radii")
+
+st.sidebar.subheader("34 kt — Tormenta Tropical")
+
+r34_ne = st.sidebar.number_input("34 kt — NE", min_value=0.0, max_value=500.0, value=120.0, step=5.0)
+r34_se = st.sidebar.number_input("34 kt — SE", min_value=0.0, max_value=500.0, value=100.0, step=5.0)
+r34_sw = st.sidebar.number_input("34 kt — SW", min_value=0.0, max_value=500.0, value=80.0, step=5.0)
+r34_nw = st.sidebar.number_input("34 kt — NW", min_value=0.0, max_value=500.0, value=100.0, step=5.0)
+
+st.sidebar.subheader("50 kt")
+
+r50_ne = st.sidebar.number_input("50 kt — NE", min_value=0.0, max_value=400.0, value=70.0, step=5.0)
+r50_se = st.sidebar.number_input("50 kt — SE", min_value=0.0, max_value=400.0, value=60.0, step=5.0)
+r50_sw = st.sidebar.number_input("50 kt — SW", min_value=0.0, max_value=400.0, value=45.0, step=5.0)
+r50_nw = st.sidebar.number_input("50 kt — NW", min_value=0.0, max_value=400.0, value=60.0, step=5.0)
+
+st.sidebar.subheader("64 kt — Huracán")
+
+r64_ne = st.sidebar.number_input("64 kt — NE", min_value=0.0, max_value=300.0, value=35.0, step=5.0)
+r64_se = st.sidebar.number_input("64 kt — SE", min_value=0.0, max_value=300.0, value=30.0, step=5.0)
+r64_sw = st.sidebar.number_input("64 kt — SW", min_value=0.0, max_value=300.0, value=20.0, step=5.0)
+r64_nw = st.sidebar.number_input("64 kt — NW", min_value=0.0, max_value=300.0, value=30.0, step=5.0)
     
 def get_category(wind):
     if wind < 34:
