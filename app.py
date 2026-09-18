@@ -18,7 +18,12 @@ lon = st.sidebar.slider("Longitud Inicial (°W)", min_value=-98.0, max_value=-40
 wind_speed = st.sidebar.slider("Vientos Sostenidos (nudos)", min_value=30, max_value=165, value=75, step=5)
 heading = st.sidebar.slider("Rumbo (°)", min_value=0, max_value=360, value=290, step=5)
 forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
+forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
+
 st.sidebar.markdown("---")
+st.sidebar.header("Wind Radii")
+
+st.sidebar.subheader("34 kt — Tormenta Tropical")
 st.sidebar.header("Wind Radii")
 
 st.sidebar.subheader("34 kt — Tormenta Tropical")
