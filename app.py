@@ -29,7 +29,7 @@ st.sidebar.header("Wind Radii")
 st.sidebar.subheader("34 kt — Tormenta Tropical")
 st.sidebar.header("Wind Radii")
 
-st.sidebar.subheader("34 kt — Tormenta Tropical")
+
 
 r34_ne = st.sidebar.number_input("34 kt — NE", min_value=0.0, max_value=500.0, value=120.0, step=5.0)
 r34_se = st.sidebar.number_input("34 kt — SE", min_value=0.0, max_value=500.0, value=100.0, step=5.0)
