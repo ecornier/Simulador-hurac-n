@@ -5,7 +5,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
-
+from streamlit_folium import st_folium
 st.set_page_config(page_title="Simulador de Huracanes NHC", layout="wide")
 
 st.title("🌀 Simulador Académico de Huracanes (Estilo NHC)")
