@@ -59,7 +59,87 @@ def get_category(wind):
         return "Huracán Cat 5 (Mayor)"
 
 category_str = get_category(wind_speed)
+def create_wind_field(center_lon, center_lat, radii):
+    """
+    Crea un campo de viento redondeado utilizando
+    cuatro radios: NE, SE, SW y NW.
+    """
 
+    # Ángulos correspondientes al centro de cada cuadrante
+    quadrant_angles = np.array([45, 135, 225, 315], dtype=float)
+
+    # Radios: NE, SE, SW, NW
+    quadrant_radii = np.array(radii, dtype=float)
+
+    # 360 puntos para crear una curva muy suave
+    angles = np.linspace(0, 360, 361)
+
+    interpolated_radii = []
+
+    for angle in angles[:-1]:
+
+        # Determinar entre qué dos cuadrantes estamos
+        if angle >= 315 or angle < 45:
+            r1 = quadrant_radii[3]  # NW
+            r2 = quadrant_radii[0]  # NE
+
+            if angle >= 315:
+                t = (angle - 315) / 90
+            else:
+                t = (angle + 45) / 90
+
+        elif angle < 135:
+            r1 = quadrant_radii[0]  # NE
+            r2 = quadrant_radii[1]  # SE
+            t = (angle - 45) / 90
+
+        elif angle < 225:
+            r1 = quadrant_radii[1]  # SE
+            r2 = quadrant_radii[2]  # SW
+            t = (angle - 135) / 90
+
+        else:
+            r1 = quadrant_radii[2]  # SW
+            r2 = quadrant_radii[3]  # NW
+            t = (angle - 225) / 90
+
+        # Mantener t dentro de 0–1
+        t = np.clip(t, 0, 1)
+
+        # Interpolación suave
+        smooth_t = (1 - np.cos(np.pi * t)) / 2
+
+        radius = (
+            r1 * (1 - smooth_t)
+            + r2 * smooth_t
+        )
+
+        interpolated_radii.append(radius)
+
+    interpolated_radii = np.array(interpolated_radii)
+
+    # --------------------------------------------------
+    # Convertir millas náuticas a grados
+    # --------------------------------------------------
+
+    lat_deg = interpolated_radii / 60.0
+
+    lon_deg = interpolated_radii / (
+        60.0 * np.cos(np.radians(center_lat))
+    )
+
+    # Convertir de ángulo meteorológico
+    # a coordenadas X/Y
+    math_angles = np.radians(
+        90 - angles[:-1]
+    )
+
+    x = center_lon + lon_deg * np.cos(math_angles)
+    y = center_lat + lat_deg * np.sin(math_angles)
+
+    coordinates = np.column_stack((x, y))
+
+    return Polygon(coordinates)
 forecast_hours = [0, 12, 24, 36, 48, 72]
 nhc_radii_deg = [0.0, 0.45, 0.75, 1.10, 1.45, 2.10]
 
@@ -82,7 +162,23 @@ for h, r in zip(forecast_hours, nhc_radii_deg):
     circles.append(pt.buffer(max(r, 0.2)))
 
 cone_geom = unary_union(circles).convex_hull
+wind34 = create_wind_field(
+    lon,
+    lat,
+    [r34_ne, r34_se, r34_sw, r34_nw]
+)
 
+wind50 = create_wind_field(
+    lon,
+    lat,
+    [r50_ne, r50_se, r50_sw, r50_nw]
+)
+
+wind64 = create_wind_field(
+    lon,
+    lat,
+    [r64_ne, r64_se, r64_sw, r64_nw]
+)
 fig = plt.figure(figsize=(10, 6))
 ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
 
@@ -98,6 +194,36 @@ ax.add_feature(cfeature.BORDERS, linestyle=":", edgecolor="#777777")
 ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, color="gray", alpha=0.3)
 
 ax.add_geometries([cone_geom], crs=ccrs.PlateCarree(), facecolor="white", edgecolor="red", alpha=0.45, linewidth=1.2)
+# Wind Radii 34 kt
+ax.add_geometries(
+    [wind34],
+    crs=ccrs.PlateCarree(),
+    facecolor="none",
+    edgecolor="green",
+    linewidth=1.5,
+    alpha=0.9
+)
+
+# Wind Radii 50 kt
+ax.add_geometries(
+    [wind50],
+    crs=ccrs.PlateCarree(),
+    facecolor="none",
+    edgecolor="orange",
+    linewidth=1.5,
+    alpha=0.9
+)
+
+# Wind Radii 64 kt
+ax.add_geometries(
+    [wind64],
+    crs=ccrs.PlateCarree(),
+    facecolor="none",
+    edgecolor="red",
+    linewidth=1.7,
+    alpha=0.9
+)
+
 ax.plot(track_lons, track_lats, color="black", linestyle="--", linewidth=1.5, transform=ccrs.PlateCarree(), label="Pronóstico")
 ax.scatter(track_lons, track_lats, color="black", s=30, zorder=5, transform=ccrs.PlateCarree())
 ax.plot(lon, lat, marker="o", color="red", markersize=9, transform=ccrs.PlateCarree(), label="Centro Actual")
