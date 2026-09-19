@@ -813,6 +813,8 @@ m = folium.Map(
 )
 
 
+# CONO
+
 folium.GeoJson(
     mapping(
         cone_geom
@@ -825,6 +827,8 @@ folium.GeoJson(
     }
 ).add_to(m)
 
+
+# WIND RADII ACTUALES
 
 wind34 = create_wind_field(
     lon,
@@ -896,6 +900,8 @@ folium.GeoJson(
 ).add_to(m)
 
 
+# TRAYECTORIA
+
 folium.PolyLine(
     locations=list(
         zip(
@@ -908,6 +914,8 @@ folium.PolyLine(
     dash_array="8, 8"
 ).add_to(m)
 
+
+# PUNTOS DE PRONÓSTICO
 
 for h, tx, ty in zip(
     forecast_hours,
@@ -929,6 +937,8 @@ for h, tx, ty in zip(
         )
     ).add_to(m)
 
+
+# CENTRO ACTUAL
 
 folium.CircleMarker(
     location=[
@@ -1404,7 +1414,7 @@ with col1:
 
         # ==================================================
         # ESTADO PERSISTENTE DE LA ANIMACIÓN
-        # ==================================================
+        # ==========================================================
 
         if "ejecutar_animacion_24h" not in st.session_state:
 
@@ -1427,13 +1437,11 @@ with col1:
             "ejecutar_animacion_24h"
         ]:
 
-
             # ==============================================
             # PUNTO FIJO
             # ==============================================
 
             punto_fijo_lat = clicked_lat
-
             punto_fijo_lon = clicked_lon
 
 
@@ -1742,7 +1750,7 @@ with col1:
 
 
             # ==============================================
-            # DATOS PARA JAVASCRIPT
+            # INFORMACIÓN SOBRE LA ANIMACIÓN
             # ==============================================
 
             frames_json = json.dumps(
@@ -1750,25 +1758,15 @@ with col1:
             )
 
 
-            map_name = (
-                mapa_animacion.get_name()
-            )
+            map_name = mapa_animacion.get_name()
 
-            wind34_name = (
-                wind34_layer.get_name()
-            )
+            wind34_name = wind34_layer.get_name()
 
-            wind50_name = (
-                wind50_layer.get_name()
-            )
+            wind50_name = wind50_layer.get_name()
 
-            wind64_name = (
-                wind64_layer.get_name()
-            )
+            wind64_name = wind64_layer.get_name()
 
-            center_marker_name = (
-                center_marker.get_name()
-            )
+            center_marker_name = center_marker.get_name()
 
 
             # ==============================================
@@ -1863,14 +1861,9 @@ with col1:
         var frame = frames[index];
 
 
-        if (!frame) {{
-            return;
-        }}
-
-
-        // ==========================================
+        // ======================================
         // MOVER CENTRO
-        // ==========================================
+        // ======================================
 
         centerMarker.setLatLng([
             frame.lat,
@@ -1878,9 +1871,9 @@ with col1:
         ]);
 
 
-        // ==========================================
+        // ======================================
         // ACTUALIZAR 34 KT
-        // ==========================================
+        // ======================================
 
         wind34Layer.clearLayers();
 
@@ -1889,9 +1882,9 @@ with col1:
         );
 
 
-        // ==========================================
+        // ======================================
         // ACTUALIZAR 50 KT
-        // ==========================================
+        // ======================================
 
         wind50Layer.clearLayers();
 
@@ -1900,9 +1893,9 @@ with col1:
         );
 
 
-        // ==========================================
+        // ======================================
         // ACTUALIZAR 64 KT
-        // ==========================================
+        // ======================================
 
         wind64Layer.clearLayers();
 
@@ -1911,9 +1904,9 @@ with col1:
         );
 
 
-        // ==========================================
+        // ======================================
         // ACTUALIZAR INFORMACIÓN
-        // ==========================================
+        // ======================================
 
         var info =
             document.getElementById(
@@ -1923,12 +1916,6 @@ with col1:
 
         if (info) {{
 
-            var lonText =
-                Math.abs(frame.lon).toFixed(4)
-                +
-                (frame.lon < 0 ? "°W" : "°E");
-
-
             info.innerHTML =
                 "<b>🎬 Simulación 24 horas</b><br>" +
                 "⏱️ <b>+" +
@@ -1937,8 +1924,8 @@ with col1:
                 "📍 Centro: " +
                 frame.lat.toFixed(4) +
                 "°, " +
-                lonText +
-                "<br>" +
+                Math.abs(frame.lon).toFixed(4) +
+                "°W<br>" +
                 "📏 Distancia: " +
                 frame.distance.toFixed(1) +
                 " NM<br>" +
@@ -1975,7 +1962,7 @@ with col1:
 
             if (
                 frameIndex >= frames.length
-            ){{
+            ) {{
 
                 clearInterval(
                     animationTimer
