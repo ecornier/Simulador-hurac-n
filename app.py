@@ -9,9 +9,7 @@ from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
 from streamlit_folium import st_folium
 import json
-
 from branca.element import Element
-
 
 st.set_page_config(
     page_title="Simulador de Huracanes NHC",
@@ -802,7 +800,7 @@ cone_geom = unary_union(
 
 
 # ==========================================================
-# MAPA
+# MAPA PRINCIPAL
 # ==========================================================
 
 m = folium.Map(
@@ -985,7 +983,8 @@ with col1:
     map_data = st_folium(
         m,
         width=None,
-        height=600
+        height=600,
+        key="mapa_principal"
     )
 
 
@@ -1421,11 +1420,19 @@ with col1:
 
         if iniciar_simulacion:
 
-            # ==================================================
-            # GENERAR FRAMES
-            # ==================================================
+            # ==============================================
+            # PUNTO FIJO
+            # ==============================================
 
-            frames = []
+            punto_fijo_lat = clicked_lat
+            punto_fijo_lon = clicked_lon
+
+
+            # ==============================================
+            # PRECALCULAR LAS 25 HORAS
+            # ==============================================
+
+            animation_frames = []
 
 
             for future_h in range(
@@ -1442,8 +1449,8 @@ with col1:
 
                 future_wind, future_distance, future_quadrant = (
                     calcular_viento_en_punto(
-                        clicked_lat,
-                        clicked_lon,
+                        punto_fijo_lat,
+                        punto_fijo_lon,
                         future_lat,
                         future_lon,
                         wind_speed,
@@ -1463,6 +1470,13 @@ with col1:
                 )
 
 
+                future_category = (
+                    get_category(
+                        future_wind
+                    )
+                )
+
+
                 future_wind_mph = (
                     future_wind
                     *
@@ -1470,7 +1484,7 @@ with col1:
                 )
 
 
-                wind34_frame = create_wind_field(
+                wind34_future = create_wind_field(
                     future_lon,
                     future_lat,
                     [
@@ -1482,7 +1496,7 @@ with col1:
                 )
 
 
-                wind50_frame = create_wind_field(
+                wind50_future = create_wind_field(
                     future_lon,
                     future_lat,
                     [
@@ -1494,7 +1508,7 @@ with col1:
                 )
 
 
-                wind64_frame = create_wind_field(
+                wind64_future = create_wind_field(
                     future_lon,
                     future_lat,
                     [
@@ -1506,49 +1520,32 @@ with col1:
                 )
 
 
-                frames.append({
-
-                    "hour": future_h,
-
-                    "lat": future_lat,
-
-                    "lon": future_lon,
-
-                    "wind": future_wind,
-
-                    "wind_mph": future_wind_mph,
-
-                    "distance": future_distance,
-
-                    "quadrant": future_quadrant,
-
-                    "category": get_category(
-                        future_wind
-                    ),
-
-                    "wind34": mapping(
-                        wind34_frame
-                    ),
-
-                    "wind50": mapping(
-                        wind50_frame
-                    ),
-
-                    "wind64": mapping(
-                        wind64_frame
-                    )
-
-                })
+                animation_frames.append(
+                    {
+                        "hour": future_h,
+                        "lat": future_lat,
+                        "lon": future_lon,
+                        "wind_mph": future_wind_mph,
+                        "wind_kt": future_wind,
+                        "distance": future_distance,
+                        "category": future_category,
+                        "quadrant": future_quadrant,
+                        "wind34": mapping(
+                            wind34_future
+                        ),
+                        "wind50": mapping(
+                            wind50_future
+                        ),
+                        "wind64": mapping(
+                            wind64_future
+                        )
+                    }
+                )
 
 
-            frames_json = json.dumps(
-                frames
-            )
-
-
-            # ==================================================
-            # CREAR MAPA DE ANIMACIÓN
-            # ==================================================
+            # ==============================================
+            # UN SOLO MAPA PARA TODA LA ANIMACIÓN
+            # ==============================================
 
             mapa_animacion = folium.Map(
                 location=[
@@ -1560,9 +1557,9 @@ with col1:
             )
 
 
-            # ==================================================
+            # ==============================================
             # CONO
-            # ==================================================
+            # ==============================================
 
             folium.GeoJson(
                 mapping(
@@ -1579,55 +1576,9 @@ with col1:
             )
 
 
-            # ==================================================
-            # CAMPOS INICIALES
-            # ==================================================
-
-            wind34_layer = folium.GeoJson(
-                frames[0]["wind34"],
-                style_function=lambda x: {
-                    "color": "green",
-                    "weight": 3,
-                    "fillOpacity": 0.10
-                }
-            )
-
-            wind34_layer.add_to(
-                mapa_animacion
-            )
-
-
-            wind50_layer = folium.GeoJson(
-                frames[0]["wind50"],
-                style_function=lambda x: {
-                    "color": "orange",
-                    "weight": 3,
-                    "fillOpacity": 0.08
-                }
-            )
-
-            wind50_layer.add_to(
-                mapa_animacion
-            )
-
-
-            wind64_layer = folium.GeoJson(
-                frames[0]["wind64"],
-                style_function=lambda x: {
-                    "color": "red",
-                    "weight": 3,
-                    "fillOpacity": 0.08
-                }
-            )
-
-            wind64_layer.add_to(
-                mapa_animacion
-            )
-
-
-            # ==================================================
+            # ==============================================
             # TRAYECTORIA
-            # ==================================================
+            # ==============================================
 
             folium.PolyLine(
                 locations=list(
@@ -1644,9 +1595,9 @@ with col1:
             )
 
 
-            # ==================================================
+            # ==============================================
             # POSICIONES PRONOSTICADAS
-            # ==================================================
+            # ==============================================
 
             for h, tx, ty in zip(
                 forecast_hours,
@@ -1671,14 +1622,68 @@ with col1:
                 )
 
 
-            # ==================================================
-            # CENTRO MÓVIL
-            # ==================================================
+            # ==============================================
+            # CAMPO 34 KT INICIAL
+            # ==============================================
 
-            centro_movil = folium.CircleMarker(
+            wind34_layer = folium.GeoJson(
+                mapping(
+                    wind34
+                ),
+                style_function=lambda x: {
+                    "color": "green",
+                    "weight": 3,
+                    "fillOpacity": 0.10
+                }
+            ).add_to(
+                mapa_animacion
+            )
+
+
+            # ==============================================
+            # CAMPO 50 KT INICIAL
+            # ==============================================
+
+            wind50_layer = folium.GeoJson(
+                mapping(
+                    wind50
+                ),
+                style_function=lambda x: {
+                    "color": "orange",
+                    "weight": 3,
+                    "fillOpacity": 0.08
+                }
+            ).add_to(
+                mapa_animacion
+            )
+
+
+            # ==============================================
+            # CAMPO 64 KT INICIAL
+            # ==============================================
+
+            wind64_layer = folium.GeoJson(
+                mapping(
+                    wind64
+                ),
+                style_function=lambda x: {
+                    "color": "red",
+                    "weight": 3,
+                    "fillOpacity": 0.08
+                }
+            ).add_to(
+                mapa_animacion
+            )
+
+
+            # ==============================================
+            # CENTRO MÓVIL
+            # ==============================================
+
+            center_marker = folium.CircleMarker(
                 location=[
-                    frames[0]["lat"],
-                    frames[0]["lon"]
+                    lat,
+                    lon
                 ],
                 radius=9,
                 color="red",
@@ -1689,21 +1694,19 @@ with col1:
                     f"{name} — "
                     f"{wind_speed} kt"
                 )
-            )
-
-            centro_movil.add_to(
+            ).add_to(
                 mapa_animacion
             )
 
 
-            # ==================================================
-            # PUNTO FIJO
-            # ==================================================
+            # ==============================================
+            # PUNTO FIJO AZUL
+            # ==============================================
 
-            punto_fijo = folium.CircleMarker(
+            folium.CircleMarker(
                 location=[
-                    clicked_lat,
-                    clicked_lon
+                    punto_fijo_lat,
+                    punto_fijo_lon
                 ],
                 radius=9,
                 color="blue",
@@ -1712,9 +1715,7 @@ with col1:
                 fill_opacity=1,
                 weight=3,
                 popup="📍 Punto seleccionado"
-            )
-
-            punto_fijo.add_to(
+            ).add_to(
                 mapa_animacion
             )
 
@@ -1731,13 +1732,16 @@ with col1:
             ])
 
 
-            # ==================================================
-            # NOMBRES DE LEAFLET
-            # ==================================================
+            # ==============================================
+            # INFORMACIÓN SOBRE LA ANIMACIÓN
+            # ==============================================
 
-            mapa_name = mapa_animacion.get_name()
+            frames_json = json.dumps(
+                animation_frames
+            )
 
-            centro_name = centro_movil.get_name()
+
+            map_name = mapa_animacion.get_name()
 
             wind34_name = wind34_layer.get_name()
 
@@ -1745,296 +1749,259 @@ with col1:
 
             wind64_name = wind64_layer.get_name()
 
+            center_marker_name = center_marker.get_name()
 
-            # ==================================================
-            # CONTROL DE INFORMACIÓN
-            # ==================================================
-
-            info_html = """
-            <div id="storm-animation-info"
-                 style="
-                    background:white;
-                    padding:12px;
-                    border-radius:8px;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.35);
-                    min-width:210px;
-                    font-family:Arial,sans-serif;
-                    font-size:14px;
-                    line-height:1.35;
-                 ">
-
-                <div style="
-                    font-size:18px;
-                    font-weight:bold;
-                    margin-bottom:8px;
-                ">
-                    🎬 Simulación
-                </div>
-
-                <div id="storm-animation-content">
-                    ⏱️ Preparando +0 horas...
-                </div>
-
-            </div>
-            """
-
-
-            # ==================================================
-            # JAVASCRIPT
-            # ==================================================
 
             animation_script = f"""
-            <script>
+<script>
 
-            (function(){{
+(function() {{
 
-                var frames = {frames_json};
+    var mapAnimation = {map_name};
 
-                var currentFrame = 0;
+    var wind34Layer = {wind34_name};
 
-                var animationTimer = null;
+    var wind50Layer = {wind50_name};
 
-                var animationRunning = false;
+    var wind64Layer = {wind64_name};
 
+    var centerMarker = {center_marker_name};
 
-                function updateFrame(){{
+    var frames = {frames_json};
 
-                    var frame = frames[currentFrame];
+    var frameIndex = 0;
 
-
-                    // ==========================================
-                    // CENTRO DEL CICLÓN
-                    // ==========================================
-
-                    {centro_name}.setLatLng([
-                        frame.lat,
-                        frame.lon
-                    ]);
+    var animationTimer = null;
 
 
-                    // ==========================================
-                    // CAMPO 34 KT
-                    // ==========================================
+    // ==========================================
+    // PANEL DE INFORMACIÓN
+    // ==========================================
 
-                    {wind34_name}.clearLayers();
+    var infoControl = L.control({{
+        position: "topright"
+    }});
 
-                    {wind34_name}.addData(
-                        frame.wind34
+
+    infoControl.onAdd = function(map) {{
+
+        var div = L.DomUtil.create(
+            "div",
+            "animation-info-control"
+        );
+
+
+        div.id = "animation-info";
+
+
+        div.style.background = "white";
+
+        div.style.padding = "12px 15px";
+
+        div.style.borderRadius = "8px";
+
+        div.style.boxShadow =
+            "0 2px 8px rgba(0,0,0,0.30)";
+
+        div.style.fontFamily =
+            "Arial, sans-serif";
+
+        div.style.fontSize =
+            "14px";
+
+        div.style.lineHeight =
+            "1.5";
+
+        div.style.minWidth =
+            "230px";
+
+
+        div.innerHTML =
+            "<b>🎬 Simulación 24 horas</b><br>" +
+            "<span id='anim-hour'>Preparando...</span>";
+
+
+        L.DomEvent.disableClickPropagation(div);
+
+        return div;
+
+    }};
+
+
+    infoControl.addTo(
+        mapAnimation
+    );
+
+
+    // ==========================================
+    // ACTUALIZAR FRAME
+    // ==========================================
+
+    function renderFrame(index) {{
+
+        var frame = frames[index];
+
+
+        // MOVER CENTRO
+
+        centerMarker.setLatLng([
+            frame.lat,
+            frame.lon
+        ]);
+
+
+        // ACTUALIZAR 34 KT
+
+        wind34Layer.clearLayers();
+
+        wind34Layer.addData(
+            frame.wind34
+        );
+
+
+        // ACTUALIZAR 50 KT
+
+        wind50Layer.clearLayers();
+
+        wind50Layer.addData(
+            frame.wind50
+        );
+
+
+        // ACTUALIZAR 64 KT
+
+        wind64Layer.clearLayers();
+
+        wind64Layer.addData(
+            frame.wind64
+        );
+
+
+        // ACTUALIZAR INFORMACIÓN
+
+        var info =
+            document.getElementById(
+                "animation-info"
+            );
+
+
+        if (info) {{
+
+            info.innerHTML =
+                "<b>🎬 Simulación 24 horas</b><br>" +
+                "⏱️ <b>+" +
+                frame.hour +
+                " horas</b><br>" +
+                "📍 Centro: " +
+                frame.lat.toFixed(4) +
+                "°, " +
+                Math.abs(frame.lon).toFixed(4) +
+                "°W<br>" +
+                "📏 Distancia: " +
+                frame.distance.toFixed(1) +
+                " NM<br>" +
+                "💨 Viento: <b>" +
+                frame.wind_mph.toFixed(0) +
+                " mph</b><br>" +
+                "🌀 Clasificación: " +
+                frame.category +
+                "<br>" +
+                "🧭 Cuadrante: " +
+                frame.quadrant;
+
+        }}
+
+    }}
+
+
+    // ==========================================
+    // PRIMER FRAME
+    // ==========================================
+
+    renderFrame(0);
+
+
+    // ==========================================
+    // ANIMACIÓN
+    // ==========================================
+
+    animationTimer = setInterval(
+        function() {{
+
+            frameIndex += 1;
+
+
+            if (
+                frameIndex >= frames.length
+            ) {{
+
+                clearInterval(
+                    animationTimer
+                );
+
+
+                frameIndex =
+                    frames.length - 1;
+
+
+                var info =
+                    document.getElementById(
+                        "animation-info"
                     );
 
 
-                    // ==========================================
-                    // CAMPO 50 KT
-                    // ==========================================
+                if (info) {{
 
-                    {wind50_name}.clearLayers();
-
-                    {wind50_name}.addData(
-                        frame.wind50
-                    );
-
-
-                    // ==========================================
-                    // CAMPO 64 KT
-                    // ==========================================
-
-                    {wind64_name}.clearLayers();
-
-                    {wind64_name}.addData(
-                        frame.wind64
-                    );
-
-
-                    // ==========================================
-                    // INFORMACIÓN
-                    // ==========================================
-
-                    var info =
-                        document.getElementById(
-                            "storm-animation-content"
-                        );
-
-
-                    if (info){{
-
-                        info.innerHTML =
-
-                            "<b>⏱️ +" +
-                            frame.hour +
-                            " horas</b><br><br>" +
-
-                            "<b>Centro:</b><br>" +
-                            frame.lat.toFixed(4) +
-                            "°N, " +
-                            Math.abs(
-                                frame.lon
-                            ).toFixed(4) +
-                            "°W<br><br>" +
-
-                            "<b>Distancia al punto:</b><br>" +
-                            frame.distance.toFixed(1) +
-                            " NM<br><br>" +
-
-                            "<b>Viento:</b><br>" +
-
-                            "<span style='font-size:28px;font-weight:bold'>" +
-                            frame.wind_mph.toFixed(0) +
-                            " mph</span><br><br>" +
-
-                            "<b>Clasificación:</b><br>" +
-                            frame.category +
-                            "<br><br>" +
-
-                            "<b>Cuadrante:</b> " +
-                            frame.quadrant;
-
-                    }}
-
-
-                    currentFrame++;
-
-
-                    // ==========================================
-                    // FINAL DE LA ANIMACIÓN
-                    // ==========================================
-
-                    if (
-                        currentFrame >= frames.length
-                    ){{
-
-                        currentFrame =
-                            frames.length - 1;
-
-                        animationRunning =
-                            false;
-
-                        clearInterval(
-                            animationTimer
-                        );
-
-                        animationTimer = null;
-
-                        var finalInfo =
-                            document.getElementById(
-                                "storm-animation-content"
-                            );
-
-                        if (finalInfo){{
-
-                            finalInfo.innerHTML +=
-                                "<br><br><b>✅ 24 horas completadas.</b>";
-
-                        }}
-
-                    }}
+                    info.innerHTML +=
+                        "<br><b>✅ Simulación completada</b>";
 
                 }}
 
 
-                function startAnimation(){{
+                return;
 
-                    if (animationRunning){{
-
-                        return;
-
-                    }}
+            }}
 
 
-                    animationRunning = true;
+            renderFrame(
+                frameIndex
+            );
 
-                    currentFrame = 0;
+        }},
+        500
+    );
 
-                    updateFrame();
+}})();
 
-
-                    animationTimer = setInterval(
-                        updateFrame,
-                        500
-                    );
-
-                }}
-
-
-                // ==========================================
-                // CONTROL LEAFLET
-                // ==========================================
-
-                var infoControl =
-                    L.control({{
-                        position: "topright"
-                    }});
+</script>
+"""
 
 
-                infoControl.onAdd =
-                    function(map){{
-
-                        var div =
-                            L.DomUtil.create(
-                                "div"
-                            );
-
-                        div.innerHTML =
-                            `{info_html}`;
-
-                        L.DomEvent.disableClickPropagation(
-                            div
-                        );
-
-                        return div;
-
-                    }};
-
-
-                infoControl.addTo(
-                    {map_name}
-                );
-
-
-                // ==========================================
-                // COMENZAR AUTOMÁTICAMENTE
-                // ==========================================
-
-                setTimeout(
-                    function(){{
-
-                        startAnimation();
-
-                    }},
-                    800
-                );
-
-
-            }})();
-
-            </script>
-            """
-
-
-            # ==================================================
-            # INSERTAR CONTROL Y JAVASCRIPT
-            # ==================================================
+            # ==============================================
+            # INYECTAR JAVASCRIPT EN EL MAPA
+            # ==============================================
 
             mapa_animacion.get_root().html.add_child(
-                Element(
-                    info_html
-                )
-            )
-
-            mapa_animacion.get_root().script.add_child(
                 Element(
                     animation_script
                 )
             )
 
 
-            # ==================================================
-            # MOSTRAR UN SOLO MAPA
-            # ==================================================
+            # ==============================================
+            # MOSTRAR EL MAPA UNA SOLA VEZ
+            # ==============================================
+
+            st.caption(
+                "La animación avanza a razón de 1 hora cada 0.5 segundos."
+            )
+
 
             st_folium(
                 mapa_animacion,
                 width=None,
-                height=700
+                height=600,
+                key="mapa_animacion_24h"
             )
 
 
