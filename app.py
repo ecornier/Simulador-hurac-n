@@ -774,6 +774,7 @@ for h, r in zip(
         )
     )
 
+
 cone_geom = unary_union(
     circles
 ).convex_hull
@@ -929,9 +930,11 @@ m.fit_bounds([
     ]
 ])
 
+
 col1, col2 = st.columns(
     [2, 1]
 )
+
 
 with col1:
 
@@ -1331,6 +1334,9 @@ with col1:
                 )
             )
 
+            # CORREGIDO:
+            # ahora están incluidos los cuatro radios de 34 kt
+
             future_wind, future_distance, future_quadrant = (
                 calcular_viento_en_punto(
                     punto_fijo_lat,
@@ -1685,7 +1691,7 @@ with col1:
 
         var container = L.DomUtil.create(
             "div",
-            "leaflet-bar"
+            "leaflet-control"
         );
 
         var button = L.DomUtil.create(
@@ -1702,11 +1708,17 @@ with col1:
         button.title =
             "Simular próximas 24 horas";
 
+        button.style.display =
+            "block";
+
         button.style.background =
             "white";
 
         button.style.border =
-            "none";
+            "1px solid #999";
+
+        button.style.borderRadius =
+            "6px";
 
         button.style.padding =
             "8px 12px";
@@ -1738,6 +1750,10 @@ with col1:
             "click",
             function() {
 
+                // --------------------------------------------------
+                // SI ESTÁ REPRODUCIENDO → PAUSAR
+                // --------------------------------------------------
+
                 if (
                     animationTimer !== null
                 ) {
@@ -1754,11 +1770,25 @@ with col1:
                     return;
                 }
 
-                frameIndex = 0;
+                // --------------------------------------------------
+                // SI TERMINÓ → REINICIAR
+                // --------------------------------------------------
 
-                renderFrame(
-                    frameIndex
-                );
+                if (
+                    frameIndex >=
+                    frames.length - 1
+                ) {
+
+                    frameIndex = 0;
+
+                    renderFrame(
+                        frameIndex
+                    );
+                }
+
+                // --------------------------------------------------
+                // REPRODUCIR
+                // --------------------------------------------------
 
                 button.innerHTML =
                     "⏸️ Pausar";
