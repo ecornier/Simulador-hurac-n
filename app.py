@@ -288,31 +288,24 @@ r64_nw = st.sidebar.number_input(
 def get_category(wind):
 
     if wind < 34:
-
         return "Depresión Tropical"
 
     elif wind < 64:
-
         return "Tormenta Tropical"
 
     elif wind < 83:
-
         return "Huracán Cat 1"
 
     elif wind < 96:
-
         return "Huracán Cat 2"
 
     elif wind < 113:
-
         return "Huracán Cat 3 (Mayor)"
 
     elif wind < 137:
-
         return "Huracán Cat 4 (Mayor)"
 
     else:
-
         return "Huracán Cat 5 (Mayor)"
 
 
@@ -527,7 +520,6 @@ def calcular_viento_en_punto(
     )
 
     if angle < 0:
-
         angle += 360
 
     if 0 <= angle < 90:
@@ -774,6 +766,7 @@ for h, r in zip(
         )
     )
 
+
 cone_geom = unary_union(
     circles
 ).convex_hull
@@ -803,6 +796,7 @@ folium.GeoJson(
         "fillOpacity": 0.35
     }
 ).add_to(m)
+
 
 wind34 = create_wind_field(
     lon,
@@ -837,6 +831,7 @@ wind64 = create_wind_field(
     ]
 )
 
+
 folium.GeoJson(
     mapping(
         wind34
@@ -870,6 +865,7 @@ folium.GeoJson(
     }
 ).add_to(m)
 
+
 folium.PolyLine(
     locations=list(
         zip(
@@ -881,6 +877,7 @@ folium.PolyLine(
     weight=2,
     dash_array="8, 8"
 ).add_to(m)
+
 
 for h, tx, ty in zip(
     forecast_hours,
@@ -902,6 +899,7 @@ for h, tx, ty in zip(
         )
     ).add_to(m)
 
+
 folium.CircleMarker(
     location=[
         lat,
@@ -918,6 +916,7 @@ folium.CircleMarker(
     )
 ).add_to(m)
 
+
 m.fit_bounds([
     [
         min(track_lats) - 6,
@@ -929,9 +928,11 @@ m.fit_bounds([
     ]
 ])
 
+
 col1, col2 = st.columns(
     [2, 1]
 )
+
 
 with col1:
 
@@ -941,6 +942,7 @@ with col1:
         height=600,
         key="mapa_principal"
     )
+
 
     if (
         map_data
@@ -969,11 +971,13 @@ with col1:
             clicked_lon
         )
 
+
     punto_seleccionado = (
         st.session_state.get(
             "punto_seleccionado"
         )
     )
+
 
     if punto_seleccionado is not None:
 
@@ -984,6 +988,7 @@ with col1:
         clicked_lon = (
             punto_seleccionado[1]
         )
+
 
         estimated_wind, distance_nm, quadrant = (
             calcular_viento_en_punto(
@@ -1007,17 +1012,20 @@ with col1:
             )
         )
 
+
         estimated_category = (
             get_category(
                 estimated_wind
             )
         )
 
+
         estimated_mph = (
             estimated_wind
             *
             1.15078
         )
+
 
         angle = np.degrees(
             np.arctan2(
@@ -1038,9 +1046,10 @@ with col1:
             )
         )
 
-        if angle < 0:
 
+        if angle < 0:
             angle += 360
+
 
         st.info(
             f"""
@@ -1054,6 +1063,7 @@ with col1:
 """
         )
 
+
         st.success(
             f"""
 💨 **VIENTO ESTIMADO ACTUAL**
@@ -1062,6 +1072,7 @@ with col1:
 *Estimación académica basada en la distancia al centro y los Wind Radii definidos.*
 """
         )
+
 
         # ==================================================
         # EVOLUCIÓN 72 HORAS
@@ -1079,6 +1090,7 @@ with col1:
         progression_wind_mph = []
         progression_distance = []
 
+
         for future_h in progression_hours:
 
             future_lat, future_lon = (
@@ -1086,6 +1098,7 @@ with col1:
                     future_h
                 )
             )
+
 
             future_wind, future_distance, future_quadrant = (
                 calcular_viento_en_punto(
@@ -1109,6 +1122,7 @@ with col1:
                 )
             )
 
+
             progression_wind_kt.append(
                 future_wind
             )
@@ -1123,6 +1137,7 @@ with col1:
                 future_distance
             )
 
+
         max_wind_kt = max(
             progression_wind_kt
         )
@@ -1133,11 +1148,13 @@ with col1:
             1.15078
         )
 
+
         max_index = (
             progression_wind_kt.index(
                 max_wind_kt
             )
         )
+
 
         max_hour = (
             progression_hours[
@@ -1145,24 +1162,29 @@ with col1:
             ]
         )
 
+
         st.subheader(
             "📈 Evolución del viento"
         )
+
 
         st.write(
             "El punto permanece fijo mientras el centro "
             "del ciclón sigue la trayectoria definida."
         )
 
+
         fig, ax = plt.subplots(
             figsize=(9, 4.5)
         )
+
 
         ax.plot(
             progression_hours,
             progression_wind_mph,
             linewidth=2
         )
+
 
         ax.axhline(
             34 * 1.15078,
@@ -1182,11 +1204,13 @@ with col1:
             linewidth=1
         )
 
+
         ax.axvline(
             max_hour,
             linestyle=":",
             linewidth=1
         )
+
 
         ax.set_xlabel(
             "Horas desde la posición inicial"
@@ -1200,21 +1224,25 @@ with col1:
             "Evolución del viento en el punto seleccionado"
         )
 
+
         ax.grid(
             True,
             alpha=0.3
         )
+
 
         st.pyplot(
             fig,
             use_container_width=True
         )
 
+
         st.metric(
             "💨 Viento máximo esperado",
             f"{max_wind_mph:.0f} mph",
             f"en +{max_hour} horas"
         )
+
 
         def encontrar_periodo(
             horas,
@@ -1235,14 +1263,17 @@ with col1:
                         h
                     )
 
+
             if not horas_dentro:
 
                 return None, None
+
 
             return (
                 min(horas_dentro),
                 max(horas_dentro)
             )
+
 
         entrada34, salida34 = encontrar_periodo(
             progression_hours,
@@ -1262,9 +1293,11 @@ with col1:
             64
         )
 
+
         st.subheader(
             "🌀 Periodos de viento"
         )
+
 
         periodos = {
             "34 kt — Tormenta Tropical": (
@@ -1280,6 +1313,7 @@ with col1:
                 salida64
             )
         }
+
 
         for nombre_umbral, periodo in periodos.items():
 
@@ -1300,6 +1334,7 @@ with col1:
                     "No alcanza este umbral."
                 )
 
+
         # ==================================================
         # SIMULACIÓN DE 24 HORAS
         # ==================================================
@@ -1315,11 +1350,13 @@ with col1:
             "cómo el campo de viento se desplaza sobre él."
         )
 
+
         if "ejecutar_animacion_24h" not in st.session_state:
 
             st.session_state[
                 "ejecutar_animacion_24h"
             ] = False
+
 
         if st.button(
             "▶️ Simular próximas 24 horas",
@@ -1330,6 +1367,7 @@ with col1:
                 "ejecutar_animacion_24h"
             ] = True
 
+
         if st.session_state[
             "ejecutar_animacion_24h"
         ]:
@@ -1337,7 +1375,9 @@ with col1:
             punto_fijo_lat = clicked_lat
             punto_fijo_lon = clicked_lon
 
+
             animation_frames = []
+
 
             for future_h in range(
                 0,
@@ -1349,6 +1389,7 @@ with col1:
                         future_h
                     )
                 )
+
 
                 future_wind, future_distance, future_quadrant = (
                     calcular_viento_en_punto(
@@ -1372,17 +1413,20 @@ with col1:
                     )
                 )
 
+
                 future_category = (
                     get_category(
                         future_wind
                     )
                 )
 
+
                 future_wind_mph = (
                     future_wind
                     *
                     1.15078
                 )
+
 
                 wind34_future = create_wind_field(
                     future_lon,
@@ -1395,6 +1439,7 @@ with col1:
                     ]
                 )
 
+
                 wind50_future = create_wind_field(
                     future_lon,
                     future_lat,
@@ -1405,6 +1450,7 @@ with col1:
                         r50_nw
                     ]
                 )
+
 
                 wind64_future = create_wind_field(
                     future_lon,
@@ -1417,6 +1463,34 @@ with col1:
                     ]
                 )
 
+
+                # --------------------------------------------------
+                # Convertir las coordenadas de Shapely
+                # a listas simples para JavaScript.
+                #
+                # Shapely = [lon, lat]
+                # Leaflet = [lat, lon]
+                # --------------------------------------------------
+
+                wind34_coordinates = list(
+                    mapping(
+                        wind34_future
+                    )["coordinates"][0]
+                )
+
+                wind50_coordinates = list(
+                    mapping(
+                        wind50_future
+                    )["coordinates"][0]
+                )
+
+                wind64_coordinates = list(
+                    mapping(
+                        wind64_future
+                    )["coordinates"][0]
+                )
+
+
                 animation_frames.append(
                     {
                         "hour": future_h,
@@ -1427,17 +1501,12 @@ with col1:
                         "distance": future_distance,
                         "category": future_category,
                         "quadrant": future_quadrant,
-                        "wind34": mapping(
-                            wind34_future
-                        ),
-                        "wind50": mapping(
-                            wind50_future
-                        ),
-                        "wind64": mapping(
-                            wind64_future
-                        )
+                        "wind34": wind34_coordinates,
+                        "wind50": wind50_coordinates,
+                        "wind64": wind64_coordinates
                     }
                 )
+
 
             # ==================================================
             # MAPA DE ANIMACIÓN
@@ -1451,6 +1520,7 @@ with col1:
                 zoom_start=5,
                 tiles="OpenStreetMap"
             )
+
 
             folium.GeoJson(
                 mapping(
@@ -1466,6 +1536,7 @@ with col1:
                 mapa_animacion
             )
 
+
             folium.PolyLine(
                 locations=list(
                     zip(
@@ -1479,6 +1550,7 @@ with col1:
             ).add_to(
                 mapa_animacion
             )
+
 
             for h, tx, ty in zip(
                 forecast_hours,
@@ -1502,54 +1574,81 @@ with col1:
                     mapa_animacion
                 )
 
+
             # ==================================================
-            # CAMPOS DE VIENTO
+            # CAMPOS DE VIENTO INICIALES
+            #
+            # Estos polígonos serán los mismos objetos
+            # que JavaScript moverá con setLatLngs().
             # ==================================================
 
-            wind34_layer = folium.GeoJson(
-                mapping(
-                    wind34
-                ),
-                style_function=lambda x: {
-                    "color": "green",
-                    "weight": 3,
-                    "fillOpacity": 0
-                }
+            initial_wind34 = animation_frames[0]["wind34"]
+            initial_wind50 = animation_frames[0]["wind50"]
+            initial_wind64 = animation_frames[0]["wind64"]
+
+
+            wind34_latlon = [
+                [
+                    point[1],
+                    point[0]
+                ]
+                for point in initial_wind34
+            ]
+
+
+            wind50_latlon = [
+                [
+                    point[1],
+                    point[0]
+                ]
+                for point in initial_wind50
+            ]
+
+
+            wind64_latlon = [
+                [
+                    point[1],
+                    point[0]
+                ]
+                for point in initial_wind64
+            ]
+
+
+            wind34_layer = folium.Polygon(
+                locations=wind34_latlon,
+                color="green",
+                weight=3,
+                fill=False
             )
 
             wind34_layer.add_to(
                 mapa_animacion
             )
 
-            wind50_layer = folium.GeoJson(
-                mapping(
-                    wind50
-                ),
-                style_function=lambda x: {
-                    "color": "orange",
-                    "weight": 3,
-                    "fillOpacity": 0
-                }
+
+            wind50_layer = folium.Polygon(
+                locations=wind50_latlon,
+                color="orange",
+                weight=3,
+                fill=False
             )
 
             wind50_layer.add_to(
                 mapa_animacion
             )
 
-            wind64_layer = folium.GeoJson(
-                mapping(
-                    wind64
-                ),
-                style_function=lambda x: {
-                    "color": "red",
-                    "weight": 3,
-                    "fillOpacity": 0
-                }
+
+            wind64_layer = folium.Polygon(
+                locations=wind64_latlon,
+                color="red",
+                weight=3,
+                fill=False
             )
 
             wind64_layer.add_to(
                 mapa_animacion
             )
+
 
             # ==================================================
             # CENTRO MÓVIL
@@ -1573,6 +1672,7 @@ with col1:
                 mapa_animacion
             )
 
+
             # ==================================================
             # PUNTO AZUL FIJO
             # ==================================================
@@ -1593,6 +1693,7 @@ with col1:
                 mapa_animacion
             )
 
+
             mapa_animacion.fit_bounds([
                 [
                     min(track_lats) - 6,
@@ -1604,9 +1705,11 @@ with col1:
                 ]
             ])
 
+
             frames_json = json.dumps(
                 animation_frames
             )
+
 
             map_name = (
                 mapa_animacion.get_name()
@@ -1628,12 +1731,23 @@ with col1:
                 center_marker.get_name()
             )
 
+
             # ==================================================
             # JAVASCRIPT
             #
-            # IMPORTANTE:
-            # Se usa una cadena normal y no un f-string.
-            # Así evitamos errores por las llaves {} de JavaScript.
+            # Ahora los polígonos se mueven directamente
+            # mediante setLatLngs().
+            #
+            # Esto evita:
+            #
+            # - duplicación de campos
+            # - acumulación de frames
+            # - desaparición de capas
+            # - clearLayers()
+            # - addData()
+            #
+            # El campo de viento es UNA SOLA figura que
+            # se desplaza junto al centro.
             # ==================================================
 
             animation_script = """
@@ -1659,6 +1773,7 @@ with col1:
     var infoControl = L.control({
         position: "topright"
     });
+
 
     infoControl.onAdd = function(map) {
 
@@ -1697,17 +1812,42 @@ with col1:
         return div;
     };
 
+
     infoControl.addTo(
         mapAnimation
     );
 
+
     // ======================================================
-    // ACTUALIZAR FRAME
+    // CONVERTIR [lon, lat] → [lat, lon]
+    // ======================================================
+
+    function convertirCoordenadas(
+        coordinates
+    ) {
+
+        return coordinates.map(
+            function(point) {
+
+                return [
+                    point[1],
+                    point[0]
+                ];
+
+            }
+        );
+
+    }
+
+
+    // ======================================================
+    // RENDERIZAR FRAME
     // ======================================================
 
     function renderFrame(index) {
 
         var frame = frames[index];
+
 
         // --------------------------------------------------
         // MOVER CENTRO
@@ -1718,35 +1858,39 @@ with col1:
             frame.lon
         ]);
 
+
         // --------------------------------------------------
-        // REEMPLAZAR COMPLETAMENTE 34 KT
+        // MOVER CAMPO 34 KT
         // --------------------------------------------------
 
-        wind34Layer.clearLayers();
-
-        wind34Layer.addData(
-            frame.wind34
+        wind34Layer.setLatLngs(
+            convertirCoordenadas(
+                frame.wind34
+            )
         );
 
+
         // --------------------------------------------------
-        // REEMPLAZAR COMPLETAMENTE 50 KT
+        // MOVER CAMPO 50 KT
         // --------------------------------------------------
 
-        wind50Layer.clearLayers();
-
-        wind50Layer.addData(
-            frame.wind50
+        wind50Layer.setLatLngs(
+            convertirCoordenadas(
+                frame.wind50
+            )
         );
 
+
         // --------------------------------------------------
-        // REEMPLAZAR COMPLETAMENTE 64 KT
+        // MOVER CAMPO 64 KT
         // --------------------------------------------------
 
-        wind64Layer.clearLayers();
-
-        wind64Layer.addData(
-            frame.wind64
+        wind64Layer.setLatLngs(
+            convertirCoordenadas(
+                frame.wind64
+            )
         );
+
 
         // --------------------------------------------------
         // ACTUALIZAR INFORMACIÓN
@@ -1757,31 +1901,51 @@ with col1:
                 "animation-info"
             );
 
+
         if (info) {
+
+            var lonDirection =
+                frame.lon < 0
+                ? "W"
+                : "E";
+
 
             info.innerHTML =
                 "<b>🎬 Simulación 24 horas</b><br>" +
+
                 "⏱️ <b>+" +
                 frame.hour +
                 " horas</b><br>" +
+
                 "📍 Centro: " +
                 frame.lat.toFixed(4) +
                 "°, " +
-                Math.abs(frame.lon).toFixed(4) +
-                "°W<br>" +
+
+                Math.abs(
+                    frame.lon
+                ).toFixed(4) +
+                "°" +
+                lonDirection +
+                "<br>" +
+
                 "📏 Distancia: " +
                 frame.distance.toFixed(1) +
                 " NM<br>" +
+
                 "💨 Viento: <b>" +
                 frame.wind_mph.toFixed(0) +
                 " mph</b><br>" +
+
                 "🌀 Clasificación: " +
                 frame.category +
                 "<br>" +
+
                 "🧭 Cuadrante: " +
                 frame.quadrant;
         }
+
     }
+
 
     // ======================================================
     // PRIMER FRAME
@@ -1789,14 +1953,18 @@ with col1:
 
     renderFrame(0);
 
+
     // ======================================================
     // ANIMACIÓN
+    //
+    // 1 hora = 0.5 segundos
     // ======================================================
 
     animationTimer = setInterval(
         function() {
 
             frameIndex += 1;
+
 
             if (
                 frameIndex >= frames.length
@@ -1806,22 +1974,29 @@ with col1:
                     animationTimer
                 );
 
+
                 frameIndex =
                     frames.length - 1;
+
 
                 var info =
                     document.getElementById(
                         "animation-info"
                     );
 
+
                 if (info) {
 
                     info.innerHTML +=
                         "<br><b>✅ Simulación completada</b>";
+
                 }
 
+
                 return;
+
             }
+
 
             renderFrame(
                 frameIndex
@@ -1831,11 +2006,13 @@ with col1:
         500
     );
 
+
 })();
 """
 
+
             # ==================================================
-            # INSERTAR LOS VALORES REALES
+            # INSERTAR VALORES REALES
             # ==================================================
 
             animation_script = (
@@ -1866,15 +2043,18 @@ with col1:
                 )
             )
 
+
             mapa_animacion.get_root().script.add_child(
                 Element(
                     animation_script
                 )
             )
 
+
             st.caption(
                 "La animación avanza a razón de 1 hora cada 0.5 segundos."
             )
+
 
             st_folium(
                 mapa_animacion,
