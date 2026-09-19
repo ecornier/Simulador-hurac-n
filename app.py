@@ -9,7 +9,9 @@ from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
 from streamlit_folium import st_folium
 import json
-from branca.element import Element
+from branca.element import MacroElement
+from jinja2 import Template
+
 
 st.set_page_config(
     page_title="Simulador de Huracanes NHC",
@@ -31,6 +33,7 @@ name = st.sidebar.text_input(
 )
 
 if modo == "Ciclón tropical histórico":
+
     ciclón = st.sidebar.selectbox(
         "Ciclón histórico",
         [
@@ -44,6 +47,7 @@ if modo == "Ciclón tropical histórico":
             "Ernesto (2024)"
         ]
     )
+
 
 if modo == "Ciclón tropical histórico":
 
@@ -126,6 +130,7 @@ if modo == "Ciclón tropical histórico":
             lon_text
         )
 
+
 if modo == "Huracán hipotético":
 
     lat = st.sidebar.number_input(
@@ -145,6 +150,7 @@ if modo == "Huracán hipotético":
         step=0.0001,
         format="%.4f"
     )
+
 
 wind_speed = st.sidebar.slider(
     "Vientos Sostenidos (nudos)",
@@ -169,6 +175,7 @@ forward_speed = st.sidebar.slider(
     value=12,
     step=1
 )
+
 
 st.sidebar.markdown("---")
 
@@ -212,6 +219,7 @@ r34_nw = st.sidebar.number_input(
     step=5.0
 )
 
+
 st.sidebar.subheader(
     "50 kt"
 )
@@ -247,6 +255,7 @@ r50_nw = st.sidebar.number_input(
     value=60.0,
     step=5.0
 )
+
 
 st.sidebar.subheader(
     "64 kt — Huracán"
@@ -394,7 +403,8 @@ def create_wind_field(
 
         smooth_t = (
             1
-            - np.cos(
+            -
+            np.cos(
                 np.pi * t
             )
         ) / 2
@@ -741,6 +751,7 @@ track_lons = []
 track_lats = []
 circles = []
 
+
 for h, r in zip(
     forecast_hours,
     nhc_radii_deg
@@ -793,6 +804,7 @@ m = folium.Map(
     tiles="OpenStreetMap"
 )
 
+
 folium.GeoJson(
     mapping(
         cone_geom
@@ -804,6 +816,7 @@ folium.GeoJson(
         "fillOpacity": 0.35
     }
 ).add_to(m)
+
 
 wind34 = create_wind_field(
     lon,
@@ -838,6 +851,7 @@ wind64 = create_wind_field(
     ]
 )
 
+
 folium.GeoJson(
     mapping(
         wind34
@@ -848,6 +862,7 @@ folium.GeoJson(
         "fillOpacity": 0
     }
 ).add_to(m)
+
 
 folium.GeoJson(
     mapping(
@@ -860,6 +875,7 @@ folium.GeoJson(
     }
 ).add_to(m)
 
+
 folium.GeoJson(
     mapping(
         wind64
@@ -870,6 +886,7 @@ folium.GeoJson(
         "fillOpacity": 0
     }
 ).add_to(m)
+
 
 folium.PolyLine(
     locations=list(
@@ -882,6 +899,7 @@ folium.PolyLine(
     weight=2,
     dash_array="8, 8"
 ).add_to(m)
+
 
 for h, tx, ty in zip(
     forecast_hours,
@@ -903,6 +921,7 @@ for h, tx, ty in zip(
         )
     ).add_to(m)
 
+
 folium.CircleMarker(
     location=[
         lat,
@@ -918,6 +937,7 @@ folium.CircleMarker(
         f"{wind_speed} kt"
     )
 ).add_to(m)
+
 
 m.fit_bounds([
     [
@@ -944,6 +964,7 @@ with col1:
         height=600,
         key="mapa_principal"
     )
+
 
     if (
         map_data
@@ -972,11 +993,13 @@ with col1:
             clicked_lon
         )
 
+
     punto_seleccionado = (
         st.session_state.get(
             "punto_seleccionado"
         )
     )
+
 
     if punto_seleccionado is not None:
 
@@ -987,6 +1010,7 @@ with col1:
         clicked_lon = (
             punto_seleccionado[1]
         )
+
 
         estimated_wind, distance_nm, quadrant = (
             calcular_viento_en_punto(
@@ -1010,17 +1034,20 @@ with col1:
             )
         )
 
+
         estimated_category = (
             get_category(
                 estimated_wind
             )
         )
 
+
         estimated_mph = (
             estimated_wind
             *
             1.15078
         )
+
 
         angle = np.degrees(
             np.arctan2(
@@ -1041,30 +1068,42 @@ with col1:
             )
         )
 
+
         if angle < 0:
 
             angle += 360
 
+
         st.info(
             f"""
 📍 **Punto seleccionado**
+
 **Latitud:** {clicked_lat:.4f}°
+
 **Longitud:** {clicked_lon:.4f}°
+
 **Distancia al centro:** {distance_nm:.1f} NM
 ({distance_nm * 1.15078:.1f} millas)
+
 **Dirección desde el centro:** {angle:.0f}°
+
 **Cuadrante:** {quadrant}
 """
         )
 
+
         st.success(
             f"""
 💨 **VIENTO ESTIMADO ACTUAL**
+
 ### {estimated_mph:.0f} mph
+
 **Clasificación:** {estimated_category}
+
 *Estimación académica basada en la distancia al centro y los Wind Radii definidos.*
 """
         )
+
 
         # ==================================================
         # EVOLUCIÓN 72 HORAS
@@ -1082,6 +1121,7 @@ with col1:
         progression_wind_mph = []
         progression_distance = []
 
+
         for future_h in progression_hours:
 
             future_lat, future_lon = (
@@ -1089,6 +1129,7 @@ with col1:
                     future_h
                 )
             )
+
 
             future_wind, future_distance, future_quadrant = (
                 calcular_viento_en_punto(
@@ -1112,6 +1153,7 @@ with col1:
                 )
             )
 
+
             progression_wind_kt.append(
                 future_wind
             )
@@ -1125,6 +1167,7 @@ with col1:
             progression_distance.append(
                 future_distance
             )
+
 
         max_wind_kt = max(
             progression_wind_kt
@@ -1148,24 +1191,29 @@ with col1:
             ]
         )
 
+
         st.subheader(
             "📈 Evolución del viento"
         )
+
 
         st.write(
             "El punto permanece fijo mientras el centro "
             "del ciclón sigue la trayectoria definida."
         )
 
+
         fig, ax = plt.subplots(
             figsize=(9, 4.5)
         )
+
 
         ax.plot(
             progression_hours,
             progression_wind_mph,
             linewidth=2
         )
+
 
         ax.axhline(
             34 * 1.15078,
@@ -1185,11 +1233,13 @@ with col1:
             linewidth=1
         )
 
+
         ax.axvline(
             max_hour,
             linestyle=":",
             linewidth=1
         )
+
 
         ax.set_xlabel(
             "Horas desde la posición inicial"
@@ -1203,21 +1253,25 @@ with col1:
             "Evolución del viento en el punto seleccionado"
         )
 
+
         ax.grid(
             True,
             alpha=0.3
         )
+
 
         st.pyplot(
             fig,
             use_container_width=True
         )
 
+
         st.metric(
             "💨 Viento máximo esperado",
             f"{max_wind_mph:.0f} mph",
             f"en +{max_hour} horas"
         )
+
 
         def encontrar_periodo(
             horas,
@@ -1247,6 +1301,7 @@ with col1:
                 max(horas_dentro)
             )
 
+
         entrada34, salida34 = encontrar_periodo(
             progression_hours,
             progression_wind_kt,
@@ -1265,9 +1320,11 @@ with col1:
             64
         )
 
+
         st.subheader(
             "🌀 Periodos de viento"
         )
+
 
         periodos = {
             "34 kt — Tormenta Tropical": (
@@ -1283,6 +1340,7 @@ with col1:
                 salida64
             )
         }
+
 
         for nombre_umbral, periodo in periodos.items():
 
@@ -1303,6 +1361,7 @@ with col1:
                     "No alcanza este umbral."
                 )
 
+
         # ==================================================
         # SIMULACIÓN DE 24 HORAS
         # ==================================================
@@ -1318,10 +1377,13 @@ with col1:
             "la simulación. El punto azul permanece fijo."
         )
 
+
         punto_fijo_lat = clicked_lat
         punto_fijo_lon = clicked_lon
 
+
         animation_frames = []
+
 
         for future_h in range(
             0,
@@ -1333,6 +1395,7 @@ with col1:
                     future_h
                 )
             )
+
 
             future_wind, future_distance, future_quadrant = (
                 calcular_viento_en_punto(
@@ -1359,17 +1422,20 @@ with col1:
                 )
             )
 
+
             future_category = (
                 get_category(
                     future_wind
                 )
             )
 
+
             future_wind_mph = (
                 future_wind
                 *
                 1.15078
             )
+
 
             wind34_future = create_wind_field(
                 future_lon,
@@ -1382,6 +1448,7 @@ with col1:
                 ]
             )
 
+
             wind50_future = create_wind_field(
                 future_lon,
                 future_lat,
@@ -1393,6 +1460,7 @@ with col1:
                 ]
             )
 
+
             wind64_future = create_wind_field(
                 future_lon,
                 future_lat,
@@ -1403,6 +1471,7 @@ with col1:
                     r64_nw
                 ]
             )
+
 
             animation_frames.append(
                 {
@@ -1426,6 +1495,7 @@ with col1:
                 }
             )
 
+
         # ==================================================
         # MAPA DE ANIMACIÓN
         # ==================================================
@@ -1438,6 +1508,7 @@ with col1:
             zoom_start=5,
             tiles="OpenStreetMap"
         )
+
 
         folium.GeoJson(
             mapping(
@@ -1453,6 +1524,7 @@ with col1:
             mapa_animacion
         )
 
+
         folium.PolyLine(
             locations=list(
                 zip(
@@ -1466,6 +1538,7 @@ with col1:
         ).add_to(
             mapa_animacion
         )
+
 
         for h, tx, ty in zip(
             forecast_hours,
@@ -1489,6 +1562,7 @@ with col1:
                 mapa_animacion
             )
 
+
         # ==================================================
         # CAMPOS DE VIENTO
         # ==================================================
@@ -1505,6 +1579,7 @@ with col1:
             mapa_animacion
         )
 
+
         wind50_layer = folium.Polygon(
             locations=[
                 [y, x]
@@ -1517,6 +1592,7 @@ with col1:
             mapa_animacion
         )
 
+
         wind64_layer = folium.Polygon(
             locations=[
                 [y, x]
@@ -1528,6 +1604,7 @@ with col1:
         ).add_to(
             mapa_animacion
         )
+
 
         # ==================================================
         # CENTRO MÓVIL
@@ -1551,6 +1628,7 @@ with col1:
             mapa_animacion
         )
 
+
         # ==================================================
         # PUNTO AZUL FIJO
         # ==================================================
@@ -1571,6 +1649,7 @@ with col1:
             mapa_animacion
         )
 
+
         mapa_animacion.fit_bounds([
             [
                 min(track_lats) - 6,
@@ -1582,507 +1661,516 @@ with col1:
             ]
         ])
 
+
+        # ==================================================
+        # NOMBRES JAVASCRIPT
+        # ==================================================
+
+        map_name = mapa_animacion.get_name()
+
+        wind34_name = wind34_layer.get_name()
+
+        wind50_name = wind50_layer.get_name()
+
+        wind64_name = wind64_layer.get_name()
+
+        center_marker_name = center_marker.get_name()
+
         frames_json = json.dumps(
             animation_frames
         )
 
-        map_name = (
-            mapa_animacion.get_name()
-        )
-
-        wind34_name = (
-            wind34_layer.get_name()
-        )
-
-        wind50_name = (
-            wind50_layer.get_name()
-        )
-
-        wind64_name = (
-            wind64_layer.get_name()
-        )
-
-        center_marker_name = (
-            center_marker.get_name()
-        )
 
         # ==================================================
-        # JAVASCRIPT
-        # BOTÓN PLAY DENTRO DEL MAPA
+        # CONTROL FOLIUM REAL
         # ==================================================
 
-        animation_script = """
-(function() {
+        class AnimationControl(MacroElement):
 
-    var mapAnimation = __MAP_NAME__;
+            def __init__(
+                self,
+                map_name,
+                wind34_name,
+                wind50_name,
+                wind64_name,
+                center_marker_name,
+                frames_json
+            ):
 
-    var wind34Layer = __WIND34_NAME__;
-    var wind50Layer = __WIND50_NAME__;
-    var wind64Layer = __WIND64_NAME__;
-
-    var centerMarker = __CENTER_MARKER_NAME__;
-
-    var frames = __FRAMES_JSON__;
-
-    var frameIndex = 0;
-    var animationTimer = null;
-    var animationStarted = false;
-
-    function convertirCoordenadas(
-        coordinates
-    ) {
-
-        return coordinates.map(
-            function(point) {
-
-                return [
-                    point[1],
-                    point[0]
-                ];
-
-            }
-        );
-
-    }
-
-
-    function renderFrame(index) {
-
-        var frame =
-            frames[index];
+                super().__init__()
 
-        if (!frame) {
-            return;
-        }
+                self._name = "AnimationControl"
 
-        // ----------------------------------------------
-        // MOVER CENTRO
-        // ----------------------------------------------
+                self.map_name = map_name
+                self.wind34_name = wind34_name
+                self.wind50_name = wind50_name
+                self.wind64_name = wind64_name
+                self.center_marker_name = center_marker_name
+                self.frames_json = frames_json
 
-        centerMarker.setLatLng([
-            frame.lat,
-            frame.lon
-        ]);
+                self._template = Template(
+                    """
+                    {% macro script(this, kwargs) %}
 
-        // ----------------------------------------------
-        // MOVER CAMPO 34 KT
-        // ----------------------------------------------
+                    (function() {
 
-        wind34Layer.setLatLngs(
-            convertirCoordenadas(
-                frame.wind34.geometry.coordinates[0]
-            )
-        );
+                        var mapAnimation =
+                            {{ this.map_name }};
 
-        // ----------------------------------------------
-        // MOVER CAMPO 50 KT
-        // ----------------------------------------------
+                        var wind34Layer =
+                            {{ this.wind34_name }};
 
-        wind50Layer.setLatLngs(
-            convertirCoordenadas(
-                frame.wind50.geometry.coordinates[0]
-            )
-        );
+                        var wind50Layer =
+                            {{ this.wind50_name }};
 
-        // ----------------------------------------------
-        // MOVER CAMPO 64 KT
-        // ----------------------------------------------
+                        var wind64Layer =
+                            {{ this.wind64_name }};
 
-        wind64Layer.setLatLngs(
-            convertirCoordenadas(
-                frame.wind64.geometry.coordinates[0]
-            )
-        );
+                        var centerMarker =
+                            {{ this.center_marker_name }};
 
-        // ----------------------------------------------
-        // ACTUALIZAR INFORMACIÓN
-        // ----------------------------------------------
+                        var frames =
+                            {{ this.frames_json | safe }};
 
-        var info =
-            document.getElementById(
-                "animation-info"
-            );
+                        var frameIndex = 0;
 
-        if (info) {
+                        var animationTimer = null;
 
-            info.innerHTML =
-                "<b>🎬 Simulación 24 horas</b><br>" +
-                "⏱️ <b>+" +
-                frame.hour +
-                " horas</b><br>" +
-                "📍 Centro: " +
-                frame.lat.toFixed(4) +
-                "°, " +
-                Math.abs(
-                    frame.lon
-                ).toFixed(4) +
-                "°W<br>" +
-                "📏 Distancia: " +
-                frame.distance.toFixed(1) +
-                " NM<br>" +
-                "💨 Viento: <b>" +
-                frame.wind_mph.toFixed(0) +
-                " mph</b><br>" +
-                "🌀 Clasificación: " +
-                frame.category +
-                "<br>" +
-                "🧭 Cuadrante: " +
-                frame.quadrant;
 
-        }
+                        // =================================================
+                        // INFORMACIÓN
+                        // =================================================
 
-    }
+                        var infoControl = L.control({
+                            position: "topright"
+                        });
 
 
-    // ==================================================
-    // CREAR CONTROLES CUANDO EL MAPA ESTÉ LISTO
-    // ==================================================
+                        infoControl.onAdd = function(map) {
 
-    function iniciarControles() {
-
-        if (
-            animationStarted
-        ) {
-            return;
-        }
-
-        animationStarted = true;
-
-
-        // ==================================================
-        // PANEL DE INFORMACIÓN
-        // ==================================================
-
-        var infoControl = L.control({
-            position: "topright"
-        });
-
-        infoControl.onAdd = function(map) {
-
-            var div = L.DomUtil.create(
-                "div",
-                "animation-info-control"
-            );
-
-            div.id =
-                "animation-info";
-
-            div.style.backgroundColor =
-                "white";
-
-            div.style.padding =
-                "12px 15px";
-
-            div.style.borderRadius =
-                "8px";
-
-            div.style.boxShadow =
-                "0 2px 8px rgba(0,0,0,0.30)";
-
-            div.style.fontFamily =
-                "Arial, sans-serif";
-
-            div.style.fontSize =
-                "14px";
-
-            div.style.lineHeight =
-                "1.5";
-
-            div.style.minWidth =
-                "230px";
-
-            div.innerHTML =
-                "<b>🎬 Simulación 24 horas</b><br>" +
-                "<span>Listo para comenzar</span>";
-
-            L.DomEvent.disableClickPropagation(
-                div
-            );
-
-            return div;
-
-        };
-
-        infoControl.addTo(
-            mapAnimation
-        );
-
-
-        // ==================================================
-        // BOTÓN PLAY
-        // ==================================================
-
-        var playControl = L.control({
-            position: "topleft"
-        });
-
-        playControl.onAdd = function(map) {
-
-            var container = L.DomUtil.create(
-                "div"
-            );
-
-            container.style.marginTop =
-                "10px";
-
-            container.style.marginLeft =
-                "10px";
-
-            container.style.background =
-                "transparent";
-
-            var button =
-                document.createElement(
-                    "button"
-                );
-
-            button.type =
-                "button";
-
-            button.id =
-                "play-24h-button";
-
-            button.innerHTML =
-                "▶️ Play 24h";
-
-            button.title =
-                "Simular próximas 24 horas";
-
-            button.style.display =
-                "block";
-
-            button.style.visibility =
-                "visible";
-
-            button.style.opacity =
-                "1";
-
-            button.style.backgroundColor =
-                "white";
-
-            button.style.color =
-                "black";
-
-            button.style.border =
-                "2px solid #555";
-
-            button.style.borderRadius =
-                "6px";
-
-            button.style.padding =
-                "8px 14px";
-
-            button.style.fontSize =
-                "14px";
-
-            button.style.fontWeight =
-                "bold";
-
-            button.style.cursor =
-                "pointer";
-
-            button.style.whiteSpace =
-                "nowrap";
-
-            button.style.minWidth =
-                "110px";
-
-            button.style.height =
-                "40px";
-
-            button.style.boxShadow =
-                "0 2px 6px rgba(0,0,0,0.30)";
-
-            container.appendChild(
-                button
-            );
-
-            L.DomEvent.disableClickPropagation(
-                container
-            );
-
-            L.DomEvent.on(
-                button,
-                "click",
-                function() {
-
-                    // ----------------------------------
-                    // PAUSAR
-                    // ----------------------------------
-
-                    if (
-                        animationTimer !== null
-                    ) {
-
-                        clearInterval(
-                            animationTimer
-                        );
-
-                        animationTimer =
-                            null;
-
-                        button.innerHTML =
-                            "▶️ Play 24h";
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // REINICIAR
-                    // ----------------------------------
-
-                    if (
-                        frameIndex >=
-                        frames.length - 1
-                    ) {
-
-                        frameIndex = 0;
-
-                        renderFrame(
-                            frameIndex
-                        );
-
-                    }
-
-
-                    // ----------------------------------
-                    // REPRODUCIR
-                    // ----------------------------------
-
-                    button.innerHTML =
-                        "⏸️ Pausar";
-
-                    animationTimer =
-                        setInterval(
-                            function() {
-
-                                frameIndex += 1;
-
-                                if (
-                                    frameIndex >=
-                                    frames.length
-                                ) {
-
-                                    clearInterval(
-                                        animationTimer
-                                    );
-
-                                    animationTimer =
-                                        null;
-
-                                    frameIndex =
-                                        frames.length - 1;
-
-                                    button.innerHTML =
-                                        "🔄 Reiniciar";
-
-                                    return;
-
-                                }
-
-                                renderFrame(
-                                    frameIndex
+                            var div =
+                                L.DomUtil.create(
+                                    "div",
+                                    "animation-info-control"
                                 );
 
-                            },
-                            500
+
+                            div.id =
+                                "animation-info";
+
+
+                            div.style.background =
+                                "white";
+
+                            div.style.padding =
+                                "12px 15px";
+
+                            div.style.borderRadius =
+                                "8px";
+
+                            div.style.boxShadow =
+                                "0 2px 8px rgba(0,0,0,0.30)";
+
+                            div.style.fontFamily =
+                                "Arial, sans-serif";
+
+                            div.style.fontSize =
+                                "14px";
+
+                            div.style.lineHeight =
+                                "1.5";
+
+                            div.style.minWidth =
+                                "230px";
+
+
+                            div.innerHTML =
+                                "<b>🎬 Simulación 24 horas</b><br>" +
+                                "⏱️ <b>+0 horas</b>";
+
+
+                            L.DomEvent.disableClickPropagation(
+                                div
+                            );
+
+
+                            return div;
+
+                        };
+
+
+                        infoControl.addTo(
+                            mapAnimation
                         );
 
-                }
-            );
 
-            return container;
+                        // =================================================
+                        // BOTÓN PLAY
+                        // =================================================
 
-        };
-
-
-        playControl.addTo(
-            mapAnimation
-        );
+                        var playControl =
+                            L.control({
+                                position: "topleft"
+                            });
 
 
-        // ==================================================
-        // FRAME INICIAL
-        // ==================================================
+                        playControl.onAdd = function(map) {
 
-        renderFrame(0);
+                            var container =
+                                L.DomUtil.create(
+                                    "div",
+                                    "leaflet-control"
+                                );
 
-    }
+
+                            container.style.marginTop =
+                                "10px";
 
 
-    // ==================================================
-    // ESPERAR A QUE LEAFLET ESTÉ LISTO
-    // ==================================================
+                            var button =
+                                L.DomUtil.create(
+                                    "button",
+                                    "",
+                                    container
+                                );
 
-    if (
-        mapAnimation &&
-        mapAnimation.whenReady
-    ) {
 
-        mapAnimation.whenReady(
-            function() {
+                            button.type =
+                                "button";
 
-                iniciarControles();
 
-            }
-        );
+                            button.innerHTML =
+                                "▶️ Play 24h";
 
-    } else {
 
-        setTimeout(
-            function() {
+                            button.title =
+                                "Iniciar simulación de 24 horas";
 
-                iniciarControles();
 
-            },
-            500
-        );
+                            button.style.display =
+                                "block";
 
-    }
+                            button.style.visibility =
+                                "visible";
 
-})();
-"""
+                            button.style.opacity =
+                                "1";
 
-        animation_script = (
-            animation_script
-            .replace(
-                "__MAP_NAME__",
-                map_name
-            )
-            .replace(
-                "__WIND34_NAME__",
-                wind34_name
-            )
-            .replace(
-                "__WIND50_NAME__",
-                wind50_name
-            )
-            .replace(
-                "__WIND64_NAME__",
-                wind64_name
-            )
-            .replace(
-                "__CENTER_MARKER_NAME__",
-                center_marker_name
-            )
-            .replace(
-                "__FRAMES_JSON__",
-                frames_json
-            )
+                            button.style.backgroundColor =
+                                "white";
+
+                            button.style.color =
+                                "black";
+
+                            button.style.border =
+                                "2px solid #333";
+
+                            button.style.borderRadius =
+                                "6px";
+
+                            button.style.padding =
+                                "8px 14px";
+
+                            button.style.fontSize =
+                                "14px";
+
+                            button.style.fontWeight =
+                                "bold";
+
+                            button.style.cursor =
+                                "pointer";
+
+                            button.style.whiteSpace =
+                                "nowrap";
+
+                            button.style.height =
+                                "40px";
+
+                            button.style.minWidth =
+                                "110px";
+
+                            button.style.boxSizing =
+                                "border-box";
+
+
+                            L.DomEvent.disableClickPropagation(
+                                container
+                            );
+
+
+                            L.DomEvent.on(
+                                button,
+                                "click",
+                                function() {
+
+                                    // -------------------------------------
+                                    // PAUSAR
+                                    // -------------------------------------
+
+                                    if (
+                                        animationTimer !== null
+                                    ) {
+
+                                        clearInterval(
+                                            animationTimer
+                                        );
+
+                                        animationTimer =
+                                            null;
+
+                                        button.innerHTML =
+                                            "▶️ Play 24h";
+
+                                        return;
+                                    }
+
+
+                                    // -------------------------------------
+                                    // REINICIAR SI TERMINÓ
+                                    // -------------------------------------
+
+                                    if (
+                                        frameIndex >=
+                                        frames.length - 1
+                                    ) {
+
+                                        frameIndex = 0;
+
+                                        renderFrame(
+                                            frameIndex
+                                        );
+                                    }
+
+
+                                    // -------------------------------------
+                                    // REPRODUCIR
+                                    // -------------------------------------
+
+                                    button.innerHTML =
+                                        "⏸️ Pausar";
+
+
+                                    animationTimer =
+                                        setInterval(
+                                            function() {
+
+                                                frameIndex += 1;
+
+
+                                                if (
+                                                    frameIndex >=
+                                                    frames.length
+                                                ) {
+
+                                                    clearInterval(
+                                                        animationTimer
+                                                    );
+
+                                                    animationTimer =
+                                                        null;
+
+
+                                                    frameIndex =
+                                                        frames.length - 1;
+
+
+                                                    button.innerHTML =
+                                                        "🔄 Reiniciar";
+
+
+                                                    var info =
+                                                        document.getElementById(
+                                                            "animation-info"
+                                                        );
+
+
+                                                    if (info) {
+
+                                                        info.innerHTML +=
+                                                            "<br><b>✅ Simulación completada</b>";
+
+                                                    }
+
+
+                                                    return;
+                                                }
+
+
+                                                renderFrame(
+                                                    frameIndex
+                                                );
+
+                                            },
+                                            500
+                                        );
+
+                                }
+                            );
+
+
+                            return container;
+
+                        };
+
+
+                        playControl.addTo(
+                            mapAnimation
+                        );
+
+
+                        // =================================================
+                        // CONVERTIR COORDENADAS
+                        // =================================================
+
+                        function convertirCoordenadas(
+                            coordinates
+                        ) {
+
+                            return coordinates.map(
+                                function(point) {
+
+                                    return [
+                                        point[1],
+                                        point[0]
+                                    ];
+
+                                }
+                            );
+
+                        }
+
+
+                        // =================================================
+                        // ACTUALIZAR FRAME
+                        // =================================================
+
+                        function renderFrame(
+                            index
+                        ) {
+
+                            if (
+                                !frames[index]
+                            ) {
+
+                                return;
+
+                            }
+
+
+                            var frame =
+                                frames[index];
+
+
+                            // CENTRO
+
+                            centerMarker.setLatLng([
+                                frame.lat,
+                                frame.lon
+                            ]);
+
+
+                            // 34 KT
+
+                            wind34Layer.setLatLngs(
+                                convertirCoordenadas(
+                                    frame.wind34.geometry.coordinates[0]
+                                )
+                            );
+
+
+                            // 50 KT
+
+                            wind50Layer.setLatLngs(
+                                convertirCoordenadas(
+                                    frame.wind50.geometry.coordinates[0]
+                                )
+                            );
+
+
+                            // 64 KT
+
+                            wind64Layer.setLatLngs(
+                                convertirCoordenadas(
+                                    frame.wind64.geometry.coordinates[0]
+                                )
+                            );
+
+
+                            // INFORMACIÓN
+
+                            var info =
+                                document.getElementById(
+                                    "animation-info"
+                                );
+
+
+                            if (info) {
+
+                                info.innerHTML =
+                                    "<b>🎬 Simulación 24 horas</b><br>" +
+                                    "⏱️ <b>+" +
+                                    frame.hour +
+                                    " horas</b><br>" +
+                                    "📍 Centro: " +
+                                    frame.lat.toFixed(4) +
+                                    "°, " +
+                                    Math.abs(
+                                        frame.lon
+                                    ).toFixed(4) +
+                                    "°W<br>" +
+                                    "📏 Distancia: " +
+                                    frame.distance.toFixed(1) +
+                                    " NM<br>" +
+                                    "💨 Viento: <b>" +
+                                    frame.wind_mph.toFixed(0) +
+                                    " mph</b><br>" +
+                                    "🌀 Clasificación: " +
+                                    frame.category +
+                                    "<br>" +
+                                    "🧭 Cuadrante: " +
+                                    frame.quadrant;
+
+                            }
+
+                        }
+
+
+                        // =================================================
+                        // FRAME INICIAL
+                        // =================================================
+
+                        renderFrame(
+                            0
+                        );
+
+
+                    })();
+
+                    {% endmacro %}
+                    """
+                )
+
+
+        animation_control = AnimationControl(
+            map_name,
+            wind34_name,
+            wind50_name,
+            wind64_name,
+            center_marker_name,
+            frames_json
         )
 
-        mapa_animacion.get_root().script.add_child(
-            Element(
-                animation_script
-            )
+
+        mapa_animacion.add_child(
+            animation_control
         )
+
 
         st.caption(
             "Cada 0.5 segundos representa 1 hora de simulación. "
             "El punto azul permanece fijo."
         )
+
 
         st_folium(
             mapa_animacion,
@@ -2102,6 +2190,7 @@ with col2:
         "Boletín de Advertencia"
     )
 
+
     st.markdown(
         f"""
 **SISTEMA:** {name}  
@@ -2113,6 +2202,7 @@ with col2:
 a {forward_speed} kt
 """
     )
+
 
     st.info(
         "Nota didáctica: El cono representa el área "
