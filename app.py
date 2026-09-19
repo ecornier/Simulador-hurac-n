@@ -70,9 +70,9 @@ if modo == "Ciclón tropical histórico":
     if modo == "Ciclón tropical histórico":
         partes_posicion = posicion.split("—")
         coordenadas = partes_posicion[1].strip().split(",")
-
-        lat = float(coordenadas[0].strip().replace("N", ""))
-        lon = float(coordenadas[1].strip().replace("W", "-"))
+        lat = float(coordenadas[0].strip().replace("N", "").replace("S", "-"))
+        lon = float(coordenadas[1].strip().replace("W", "").replace("E", "-"))
+        
 lat = lat = st.sidebar.number_input(
     "Latitud Inicial (°N)",
     min_value=10.0,
