@@ -26,7 +26,6 @@ modo = st.sidebar.radio(
     "Modo de simulación",
     ["Huracán hipotético", "Ciclón tropical histórico"]
 )
-
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
 if modo == "Ciclón tropical histórico":
     ciclón = st.sidebar.selectbox(
@@ -41,25 +40,17 @@ if modo == "Ciclón tropical histórico":
             "Erin (2007)",
             "Ernesto (2024)"
         ]
-    )
 if modo == "Ciclón tropical histórico":
-    "Posición histórica",
-    posiciones
-    if modo == "Ciclón tropical histórico":
     datos_hurdat = descargar_hurdat()
     datos_ciclon = buscar_ciclon(datos_hurdat, ciclón)
 
-    posiciones = [
-        linea for linea in datos_ciclon
-        if linea.strip() and not linea.startswith("AL")
-    ]
+    posiciones = datos_ciclon[1:]
 
     posicion = st.sidebar.selectbox(
         "Posición histórica",
         posiciones
     )
-)
-    )
+
 lat = lat = st.sidebar.number_input(
     "Latitud Inicial (°N)",
     min_value=10.0,
