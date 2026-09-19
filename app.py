@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import folium
+from folium import plugins
 from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
 from streamlit_folium import st_folium
@@ -554,7 +555,7 @@ def calcular_viento_en_punto(
 
         r34 = r34_se
         r50 = r50_se
-        r64 = r64_se
+        r64 = r50_se
 
     elif 180 <= angle < 270:
 
@@ -1507,6 +1508,20 @@ with col1:
             ],
             zoom_start=5,
             tiles="OpenStreetMap"
+        )
+
+
+        # ==================================================
+        # BOTÓN PANTALLA COMPLETA
+        # ==================================================
+
+        plugins.Fullscreen(
+            position="topright",
+            title="Pantalla completa",
+            title_cancel="Salir de pantalla completa",
+            force_separate_button=True
+        ).add_to(
+            mapa_animacion
         )
 
 
