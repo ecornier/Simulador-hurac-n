@@ -1418,6 +1418,13 @@ with col1:
 
         if iniciar_simulacion:
 
+            # ==============================================
+            # GUARDAR EL PUNTO SELECCIONADO
+            # ==============================================
+
+            punto_fijo_lat = clicked_lat
+            punto_fijo_lon = clicked_lon
+
             mapa_placeholder = st.empty()
 
             datos_placeholder = st.empty()
@@ -1437,8 +1444,8 @@ with col1:
 
                 future_wind, future_distance, future_quadrant = (
                     calcular_viento_en_punto(
-                        clicked_lat,
-                        clicked_lon,
+                        punto_fijo_lat,
+                        punto_fijo_lon,
                         future_lat,
                         future_lon,
                         wind_speed,
@@ -1644,19 +1651,22 @@ with col1:
                 )
 
 
+                # ==========================================
                 # PUNTO FIJO
+                # ==========================================
 
                 folium.CircleMarker(
                     location=[
-                        clicked_lat,
-                        clicked_lon
+                        punto_fijo_lat,
+                        punto_fijo_lon
                     ],
-                    radius=8,
+                    radius=9,
                     color="blue",
                     fill=True,
                     fill_color="blue",
                     fill_opacity=1,
-                    popup="Punto seleccionado"
+                    weight=3,
+                    popup="📍 Punto seleccionado"
                 ).add_to(
                     mapa_animacion
                 )
