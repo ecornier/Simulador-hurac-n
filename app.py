@@ -1334,9 +1334,6 @@ with col1:
                 )
             )
 
-            # CORREGIDO:
-            # ahora están incluidos los cuatro radios de 34 kt
-
             future_wind, future_distance, future_quadrant = (
                 calcular_viento_en_punto(
                     punto_fijo_lat,
@@ -1629,228 +1626,7 @@ with col1:
 
     var frameIndex = 0;
     var animationTimer = null;
-
-    // ======================================================
-    // PANEL DE INFORMACIÓN
-    // ======================================================
-
-    var infoControl = L.control({
-        position: "topright"
-    });
-
-    infoControl.onAdd = function(map) {
-
-        var div = L.DomUtil.create(
-            "div",
-            "animation-info-control"
-        );
-
-        div.id = "animation-info";
-
-        div.style.background = "white";
-        div.style.padding = "12px 15px";
-        div.style.borderRadius = "8px";
-
-        div.style.boxShadow =
-            "0 2px 8px rgba(0,0,0,0.30)";
-
-        div.style.fontFamily =
-            "Arial, sans-serif";
-
-        div.style.fontSize =
-            "14px";
-
-        div.style.lineHeight =
-            "1.5";
-
-        div.style.minWidth =
-            "230px";
-
-        div.innerHTML =
-            "<b>🎬 Simulación 24 horas</b><br>" +
-            "<span id='anim-hour'>Listo para comenzar</span>";
-
-        L.DomEvent.disableClickPropagation(div);
-
-        return div;
-    };
-
-    infoControl.addTo(
-        mapAnimation
-    );
-
-    // ======================================================
-    // BOTÓN PLAY
-    // ======================================================
-
-    var playControl = L.control({
-        position: "topleft"
-    });
-
-    playControl.onAdd = function(map) {
-
-        var container = L.DomUtil.create(
-            "div",
-            "leaflet-control"
-        );
-
-        var button = L.DomUtil.create(
-            "button",
-            "",
-            container
-        );
-
-        button.type = "button";
-
-        button.innerHTML =
-            "▶️ Play 24h";
-
-        button.title =
-            "Simular próximas 24 horas";
-
-        button.style.display =
-            "block";
-
-        button.style.background =
-            "white";
-
-        button.style.border =
-            "1px solid #999";
-
-        button.style.borderRadius =
-            "6px";
-
-        button.style.padding =
-            "8px 12px";
-
-        button.style.fontSize =
-            "14px";
-
-        button.style.fontWeight =
-            "bold";
-
-        button.style.cursor =
-            "pointer";
-
-        button.style.whiteSpace =
-            "nowrap";
-
-        button.style.height =
-            "38px";
-
-        button.style.minWidth =
-            "105px";
-
-        L.DomEvent.disableClickPropagation(
-            container
-        );
-
-        L.DomEvent.on(
-            button,
-            "click",
-            function() {
-
-                // --------------------------------------------------
-                // SI ESTÁ REPRODUCIENDO → PAUSAR
-                // --------------------------------------------------
-
-                if (
-                    animationTimer !== null
-                ) {
-
-                    clearInterval(
-                        animationTimer
-                    );
-
-                    animationTimer = null;
-
-                    button.innerHTML =
-                        "▶️ Play 24h";
-
-                    return;
-                }
-
-                // --------------------------------------------------
-                // SI TERMINÓ → REINICIAR
-                // --------------------------------------------------
-
-                if (
-                    frameIndex >=
-                    frames.length - 1
-                ) {
-
-                    frameIndex = 0;
-
-                    renderFrame(
-                        frameIndex
-                    );
-                }
-
-                // --------------------------------------------------
-                // REPRODUCIR
-                // --------------------------------------------------
-
-                button.innerHTML =
-                    "⏸️ Pausar";
-
-                animationTimer =
-                    setInterval(
-                        function() {
-
-                            frameIndex += 1;
-
-                            if (
-                                frameIndex >=
-                                frames.length
-                            ) {
-
-                                clearInterval(
-                                    animationTimer
-                                );
-
-                                animationTimer =
-                                    null;
-
-                                frameIndex =
-                                    frames.length - 1;
-
-                                button.innerHTML =
-                                    "🔄 Reiniciar";
-
-                                var info =
-                                    document.getElementById(
-                                        "animation-info"
-                                    );
-
-                                if (info) {
-
-                                    info.innerHTML +=
-                                        "<br><b>✅ Simulación completada</b>";
-                                }
-
-                                return;
-                            }
-
-                            renderFrame(
-                                frameIndex
-                            );
-
-                        },
-                        500
-                    );
-            }
-        );
-
-        return container;
-    };
-
-    playControl.addTo(
-        mapAnimation
-    );
-
-    // ======================================================
-    // ACTUALIZAR FRAME
-    // ======================================================
+    var animationStarted = false;
 
     function convertirCoordenadas(
         coordinates
@@ -1863,27 +1639,34 @@ with col1:
                     point[1],
                     point[0]
                 ];
+
             }
         );
+
     }
+
 
     function renderFrame(index) {
 
         var frame =
             frames[index];
 
-        // --------------------------------------------------
+        if (!frame) {
+            return;
+        }
+
+        // ----------------------------------------------
         // MOVER CENTRO
-        // --------------------------------------------------
+        // ----------------------------------------------
 
         centerMarker.setLatLng([
             frame.lat,
             frame.lon
         ]);
 
-        // --------------------------------------------------
-        // MOVER 34 KT
-        // --------------------------------------------------
+        // ----------------------------------------------
+        // MOVER CAMPO 34 KT
+        // ----------------------------------------------
 
         wind34Layer.setLatLngs(
             convertirCoordenadas(
@@ -1891,9 +1674,9 @@ with col1:
             )
         );
 
-        // --------------------------------------------------
-        // MOVER 50 KT
-        // --------------------------------------------------
+        // ----------------------------------------------
+        // MOVER CAMPO 50 KT
+        // ----------------------------------------------
 
         wind50Layer.setLatLngs(
             convertirCoordenadas(
@@ -1901,9 +1684,9 @@ with col1:
             )
         );
 
-        // --------------------------------------------------
-        // MOVER 64 KT
-        // --------------------------------------------------
+        // ----------------------------------------------
+        // MOVER CAMPO 64 KT
+        // ----------------------------------------------
 
         wind64Layer.setLatLngs(
             convertirCoordenadas(
@@ -1911,9 +1694,9 @@ with col1:
             )
         );
 
-        // --------------------------------------------------
-        // INFORMACIÓN
-        // --------------------------------------------------
+        // ----------------------------------------------
+        // ACTUALIZAR INFORMACIÓN
+        // ----------------------------------------------
 
         var info =
             document.getElementById(
@@ -1945,14 +1728,319 @@ with col1:
                 "<br>" +
                 "🧭 Cuadrante: " +
                 frame.quadrant;
+
         }
+
     }
 
-    // ======================================================
-    // FRAME INICIAL
-    // ======================================================
 
-    renderFrame(0);
+    // ==================================================
+    // CREAR CONTROLES CUANDO EL MAPA ESTÉ LISTO
+    // ==================================================
+
+    function iniciarControles() {
+
+        if (
+            animationStarted
+        ) {
+            return;
+        }
+
+        animationStarted = true;
+
+
+        // ==================================================
+        // PANEL DE INFORMACIÓN
+        // ==================================================
+
+        var infoControl = L.control({
+            position: "topright"
+        });
+
+        infoControl.onAdd = function(map) {
+
+            var div = L.DomUtil.create(
+                "div",
+                "animation-info-control"
+            );
+
+            div.id =
+                "animation-info";
+
+            div.style.backgroundColor =
+                "white";
+
+            div.style.padding =
+                "12px 15px";
+
+            div.style.borderRadius =
+                "8px";
+
+            div.style.boxShadow =
+                "0 2px 8px rgba(0,0,0,0.30)";
+
+            div.style.fontFamily =
+                "Arial, sans-serif";
+
+            div.style.fontSize =
+                "14px";
+
+            div.style.lineHeight =
+                "1.5";
+
+            div.style.minWidth =
+                "230px";
+
+            div.innerHTML =
+                "<b>🎬 Simulación 24 horas</b><br>" +
+                "<span>Listo para comenzar</span>";
+
+            L.DomEvent.disableClickPropagation(
+                div
+            );
+
+            return div;
+
+        };
+
+        infoControl.addTo(
+            mapAnimation
+        );
+
+
+        // ==================================================
+        // BOTÓN PLAY
+        // ==================================================
+
+        var playControl = L.control({
+            position: "topleft"
+        });
+
+        playControl.onAdd = function(map) {
+
+            var container = L.DomUtil.create(
+                "div"
+            );
+
+            container.style.marginTop =
+                "10px";
+
+            container.style.marginLeft =
+                "10px";
+
+            container.style.background =
+                "transparent";
+
+            var button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.id =
+                "play-24h-button";
+
+            button.innerHTML =
+                "▶️ Play 24h";
+
+            button.title =
+                "Simular próximas 24 horas";
+
+            button.style.display =
+                "block";
+
+            button.style.visibility =
+                "visible";
+
+            button.style.opacity =
+                "1";
+
+            button.style.backgroundColor =
+                "white";
+
+            button.style.color =
+                "black";
+
+            button.style.border =
+                "2px solid #555";
+
+            button.style.borderRadius =
+                "6px";
+
+            button.style.padding =
+                "8px 14px";
+
+            button.style.fontSize =
+                "14px";
+
+            button.style.fontWeight =
+                "bold";
+
+            button.style.cursor =
+                "pointer";
+
+            button.style.whiteSpace =
+                "nowrap";
+
+            button.style.minWidth =
+                "110px";
+
+            button.style.height =
+                "40px";
+
+            button.style.boxShadow =
+                "0 2px 6px rgba(0,0,0,0.30)";
+
+            container.appendChild(
+                button
+            );
+
+            L.DomEvent.disableClickPropagation(
+                container
+            );
+
+            L.DomEvent.on(
+                button,
+                "click",
+                function() {
+
+                    // ----------------------------------
+                    // PAUSAR
+                    // ----------------------------------
+
+                    if (
+                        animationTimer !== null
+                    ) {
+
+                        clearInterval(
+                            animationTimer
+                        );
+
+                        animationTimer =
+                            null;
+
+                        button.innerHTML =
+                            "▶️ Play 24h";
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // REINICIAR
+                    // ----------------------------------
+
+                    if (
+                        frameIndex >=
+                        frames.length - 1
+                    ) {
+
+                        frameIndex = 0;
+
+                        renderFrame(
+                            frameIndex
+                        );
+
+                    }
+
+
+                    // ----------------------------------
+                    // REPRODUCIR
+                    // ----------------------------------
+
+                    button.innerHTML =
+                        "⏸️ Pausar";
+
+                    animationTimer =
+                        setInterval(
+                            function() {
+
+                                frameIndex += 1;
+
+                                if (
+                                    frameIndex >=
+                                    frames.length
+                                ) {
+
+                                    clearInterval(
+                                        animationTimer
+                                    );
+
+                                    animationTimer =
+                                        null;
+
+                                    frameIndex =
+                                        frames.length - 1;
+
+                                    button.innerHTML =
+                                        "🔄 Reiniciar";
+
+                                    return;
+
+                                }
+
+                                renderFrame(
+                                    frameIndex
+                                );
+
+                            },
+                            500
+                        );
+
+                }
+            );
+
+            return container;
+
+        };
+
+
+        playControl.addTo(
+            mapAnimation
+        );
+
+
+        // ==================================================
+        // FRAME INICIAL
+        // ==================================================
+
+        renderFrame(0);
+
+    }
+
+
+    // ==================================================
+    // ESPERAR A QUE LEAFLET ESTÉ LISTO
+    // ==================================================
+
+    if (
+        mapAnimation &&
+        mapAnimation.whenReady
+    ) {
+
+        mapAnimation.whenReady(
+            function() {
+
+                iniciarControles();
+
+            }
+        );
+
+    } else {
+
+        setTimeout(
+            function() {
+
+                iniciarControles();
+
+            },
+            500
+        );
+
+    }
 
 })();
 """
