@@ -40,7 +40,8 @@ if modo == "Ciclón tropical histórico":
             "Erin (2007)",
             "Ernesto (2024)"
         ]
- (
+    
+
 if modo == "Ciclón tropical histórico":
     datos_hurdat = descargar_hurdat()
     datos_ciclon = buscar_ciclon(datos_hurdat, ciclón)
@@ -51,7 +52,6 @@ if modo == "Ciclón tropical histórico":
         "Posición histórica",
         posiciones
     )
-
 lat = lat = st.sidebar.number_input(
     "Latitud Inicial (°N)",
     min_value=10.0,
