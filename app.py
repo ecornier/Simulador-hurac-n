@@ -5,24 +5,32 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import folium
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
 from streamlit_folium import st_folium
 import time
 
-st.set_page_config(page_title="Simulador de Huracanes NHC", layout="wide")
+st.set_page_config(
+    page_title="Simulador de Huracanes NHC",
+    layout="wide"
+)
 
 st.title("🌀 Simulador Académico de Huracanes (Estilo NHC)")
 
 st.sidebar.header("Parámetros del Ciclón")
+
 modo = st.sidebar.radio(
     "Modo de simulación",
     ["Huracán hipotético", "Ciclón tropical histórico"]
 )
 
-name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
+name = st.sidebar.text_input(
+    "Nombre de la Tormenta",
+    value="ALBERTO"
+)
 
 if modo == "Ciclón tropical histórico":
+
     ciclón = st.sidebar.selectbox(
         "Ciclón histórico",
         [
@@ -37,8 +45,11 @@ if modo == "Ciclón tropical histórico":
         ]
     )
 
+
 if modo == "Ciclón tropical histórico":
+
     datos_hurdat = descargar_hurdat()
+
     datos_ciclon = buscar_ciclon(
         datos_hurdat,
         ciclón.split(" (")[0]
@@ -49,16 +60,20 @@ if modo == "Ciclón tropical histórico":
     opciones_posicion = []
 
     for linea in posiciones:
+
         partes = linea.split(",")
 
         if len(partes) >= 7:
+
             fecha = partes[0].strip()
             hora = partes[1].strip()
+
             lat_hurdat = partes[4].strip()
             lon_hurdat = partes[5].strip()
 
             opciones_posicion.append(
-                f"{fecha} {hora} UTC — {lat_hurdat}, {lon_hurdat}"
+                f"{fecha} {hora} UTC — "
+                f"{lat_hurdat}, {lon_hurdat}"
             )
 
     posicion = st.sidebar.selectbox(
@@ -67,26 +82,55 @@ if modo == "Ciclón tropical histórico":
     )
 
     partes_posicion = posicion.split("—")
-    coordenadas = partes_posicion[1].strip().split(",")
+
+    coordenadas = (
+        partes_posicion[1]
+        .strip()
+        .split(",")
+    )
 
     lat_text = coordenadas[0].strip()
     lon_text = coordenadas[1].strip()
 
     if lat_text.endswith("N"):
-        lat = float(lat_text[:-1])
+
+        lat = float(
+            lat_text[:-1]
+        )
+
     elif lat_text.endswith("S"):
-        lat = -float(lat_text[:-1])
+
+        lat = -float(
+            lat_text[:-1]
+        )
+
     else:
-        lat = float(lat_text)
+
+        lat = float(
+            lat_text
+        )
 
     if lon_text.endswith("W"):
-        lon = -float(lon_text[:-1])
+
+        lon = -float(
+            lon_text[:-1]
+        )
+
     elif lon_text.endswith("E"):
-        lon = float(lon_text[:-1])
+
+        lon = float(
+            lon_text[:-1]
+        )
+
     else:
-        lon = float(lon_text)
+
+        lon = float(
+            lon_text
+        )
+
 
 if modo == "Huracán hipotético":
+
     lat = st.sidebar.number_input(
         "Latitud Inicial (°N)",
         min_value=10.0,
@@ -105,6 +149,7 @@ if modo == "Huracán hipotético":
         format="%.4f"
     )
 
+
 wind_speed = st.sidebar.slider(
     "Vientos Sostenidos (nudos)",
     min_value=30,
@@ -112,6 +157,7 @@ wind_speed = st.sidebar.slider(
     value=75,
     step=5
 )
+
 
 heading = st.sidebar.slider(
     "Rumbo (°)",
@@ -121,6 +167,7 @@ heading = st.sidebar.slider(
     step=5
 )
 
+
 forward_speed = st.sidebar.slider(
     "Velocidad de Avance (kt)",
     min_value=5,
@@ -129,10 +176,18 @@ forward_speed = st.sidebar.slider(
     step=1
 )
 
-st.sidebar.markdown("---")
-st.sidebar.header("Wind Radii")
 
-st.sidebar.subheader("34 kt — Tormenta Tropical")
+st.sidebar.markdown("---")
+
+st.sidebar.header(
+    "Wind Radii"
+)
+
+
+st.sidebar.subheader(
+    "34 kt — Tormenta Tropical"
+)
+
 
 r34_ne = st.sidebar.number_input(
     "34 kt — NE",
@@ -166,7 +221,11 @@ r34_nw = st.sidebar.number_input(
     step=5.0
 )
 
-st.sidebar.subheader("50 kt")
+
+st.sidebar.subheader(
+    "50 kt"
+)
+
 
 r50_ne = st.sidebar.number_input(
     "50 kt — NE",
@@ -200,7 +259,11 @@ r50_nw = st.sidebar.number_input(
     step=5.0
 )
 
-st.sidebar.subheader("64 kt — Huracán")
+
+st.sidebar.subheader(
+    "64 kt — Huracán"
+)
+
 
 r64_ne = st.sidebar.number_input(
     "64 kt — NE",
@@ -238,28 +301,37 @@ r64_nw = st.sidebar.number_input(
 def get_category(wind):
 
     if wind < 34:
+
         return "Depresión Tropical"
 
     elif wind < 64:
+
         return "Tormenta Tropical"
 
     elif wind < 83:
+
         return "Huracán Cat 1"
 
     elif wind < 96:
+
         return "Huracán Cat 2"
 
     elif wind < 113:
+
         return "Huracán Cat 3 (Mayor)"
 
     elif wind < 137:
+
         return "Huracán Cat 4 (Mayor)"
 
     else:
+
         return "Huracán Cat 5 (Mayor)"
 
 
-category_str = get_category(wind_speed)
+category_str = get_category(
+    wind_speed
+)
 
 
 def create_wind_field(
@@ -289,30 +361,43 @@ def create_wind_field(
             r2 = quadrant_radii[0]
 
             if angle >= 315:
-                t = (angle - 315) / 90
+
+                t = (
+                    angle - 315
+                ) / 90
+
             else:
-                t = (angle + 45) / 90
+
+                t = (
+                    angle + 45
+                ) / 90
 
         elif angle < 135:
 
             r1 = quadrant_radii[0]
             r2 = quadrant_radii[1]
 
-            t = (angle - 45) / 90
+            t = (
+                angle - 45
+            ) / 90
 
         elif angle < 225:
 
             r1 = quadrant_radii[1]
             r2 = quadrant_radii[2]
 
-            t = (angle - 135) / 90
+            t = (
+                angle - 135
+            ) / 90
 
         else:
 
             r1 = quadrant_radii[2]
             r2 = quadrant_radii[3]
 
-            t = (angle - 225) / 90
+            t = (
+                angle - 225
+            ) / 90
 
         t = np.clip(
             t,
@@ -321,12 +406,16 @@ def create_wind_field(
         )
 
         smooth_t = (
-            1 - np.cos(np.pi * t)
+            1
+            - np.cos(
+                np.pi * t
+            )
         ) / 2
 
         radius = (
             r1 * (1 - smooth_t)
-            + r2 * smooth_t
+            +
+            r2 * smooth_t
         )
 
         interpolated_radii.append(
@@ -338,7 +427,8 @@ def create_wind_field(
     )
 
     lat_deg = (
-        interpolated_radii / 60.0
+        interpolated_radii
+        / 60.0
     )
 
     lon_deg = (
@@ -346,8 +436,11 @@ def create_wind_field(
         /
         (
             60.0
-            * np.cos(
-                np.radians(center_lat)
+            *
+            np.cos(
+                np.radians(
+                    center_lat
+                )
             )
         )
     )
@@ -358,21 +451,31 @@ def create_wind_field(
 
     x = (
         center_lon
-        + lon_deg
-        * np.cos(math_angles)
+        +
+        lon_deg
+        *
+        np.cos(
+            math_angles
+        )
     )
 
     y = (
         center_lat
-        + lat_deg
-        * np.sin(math_angles)
+        +
+        lat_deg
+        *
+        np.sin(
+            math_angles
+        )
     )
 
     coordinates = np.column_stack(
         (x, y)
     )
 
-    return Polygon(coordinates)
+    return Polygon(
+        coordinates
+    )
 
 
 def calcular_viento_en_punto(
@@ -396,11 +499,15 @@ def calcular_viento_en_punto(
 ):
 
     lat_diff = (
-        point_lat - future_lat
+        point_lat
+        -
+        future_lat
     )
 
     lon_diff = (
-        point_lon - future_lon
+        point_lon
+        -
+        future_lon
     )
 
     distance_nm = np.sqrt(
@@ -408,9 +515,13 @@ def calcular_viento_en_punto(
         +
         (
             lon_diff
-            * 60.0
-            * np.cos(
-                np.radians(future_lat)
+            *
+            60.0
+            *
+            np.cos(
+                np.radians(
+                    future_lat
+                )
             )
         ) ** 2
     )
@@ -418,15 +529,20 @@ def calcular_viento_en_punto(
     angle = np.degrees(
         np.arctan2(
             lon_diff
-            * np.cos(
-                np.radians(future_lat)
+            *
+            np.cos(
+                np.radians(
+                    future_lat
+                )
             ),
             lat_diff
         )
     )
 
     if angle < 0:
+
         angle += 360
+
 
     if 0 <= angle < 90:
 
@@ -460,44 +576,67 @@ def calcular_viento_en_punto(
         r50 = r50_nw
         r64 = r64_nw
 
+
     if distance_nm <= r64 and r64 > 0:
 
         fraction = (
-            distance_nm / r64
+            distance_nm
+            /
+            r64
         )
 
         estimated_wind = (
             wind_speed
-            - (
+            -
+            (
                 (wind_speed - 64)
-                * fraction
+                *
+                fraction
             )
         )
 
     elif distance_nm <= r50 and r50 > r64:
 
         fraction = (
-            distance_nm - r64
+            distance_nm
+            -
+            r64
         ) / (
-            r50 - r64
+            r50
+            -
+            r64
         )
 
         estimated_wind = (
             64
-            - (14 * fraction)
+            -
+            (
+                14
+                *
+                fraction
+            )
         )
 
     elif distance_nm <= r34 and r34 > r50:
 
         fraction = (
-            distance_nm - r50
+            distance_nm
+            -
+            r50
         ) / (
-            r34 - r50
+            r34
+            -
+            r50
         )
 
         estimated_wind = (
             50
-            - (16 * fraction)
+            -
+            (
+                16
+                *
+                fraction
+            )
         )
 
     elif distance_nm <= r34 and r34 > 0:
@@ -517,14 +656,18 @@ def calcular_viento_en_punto(
                     -
                     (
                         distance_nm
-                        - r34
-                    ) / 50
+                        -
+                        r34
+                    )
+                    /
+                    50
                 )
             )
 
         else:
 
             estimated_wind = 0
+
 
     estimated_wind = max(
         0,
@@ -541,29 +684,49 @@ def calcular_viento_en_punto(
     )
 
 
+# ==========================================================
+# TRAYECTORIA
+# ==========================================================
+
+rad_heading = np.radians(
+    90 - heading
+)
+
+
 def obtener_posicion_futura(
     future_h
 ):
 
     dist_nm = (
         forward_speed
-        * future_h
+        *
+        future_h
     )
 
     dist_deg = (
-        dist_nm / 60.0
+        dist_nm
+        /
+        60.0
     )
 
     future_lon = (
         lon
-        + dist_deg
-        * np.cos(rad_heading)
+        +
+        dist_deg
+        *
+        np.cos(
+            rad_heading
+        )
     )
 
     future_lat = (
         lat
-        + dist_deg
-        * np.sin(rad_heading)
+        +
+        dist_deg
+        *
+        np.sin(
+            rad_heading
+        )
     )
 
     return (
@@ -590,237 +753,245 @@ nhc_radii_deg = [
     2.10
 ]
 
-rad_heading = np.radians(
-    90 - heading
-)
 
 track_lons = []
 track_lats = []
 circles = []
+
 
 for h, r in zip(
     forecast_hours,
     nhc_radii_deg
 ):
 
-    fx, fy = (
-        obtener_posicion_futura(h)
+    future_lat, future_lon = (
+        obtener_posicion_futura(
+            h
+        )
     )
 
     track_lons.append(
-        fy
+        future_lon
     )
 
     track_lats.append(
-        fx
+        future_lat
     )
 
     pt = Point(
-        fy,
-        fx
+        future_lon,
+        future_lat
     )
 
     circles.append(
         pt.buffer(
-            max(r, 0.2)
+            max(
+                r,
+                0.2
+            )
         )
     )
+
 
 cone_geom = unary_union(
     circles
 ).convex_hull
 
 
-def crear_mapa(
-    center_lat,
-    center_lon,
-    hora_actual=0,
-    punto=None
+# ==========================================================
+# MAPA
+# ==========================================================
+
+m = folium.Map(
+    location=[
+        lat,
+        lon
+    ],
+    zoom_start=5,
+    tiles="OpenStreetMap"
+)
+
+
+# CONO
+
+folium.GeoJson(
+    mapping(
+        cone_geom
+    ),
+    style_function=lambda x: {
+        "fillColor": "white",
+        "color": "red",
+        "weight": 2,
+        "fillOpacity": 0.35
+    }
+).add_to(m)
+
+
+# WIND RADII ACTUALES
+
+wind34 = create_wind_field(
+    lon,
+    lat,
+    [
+        r34_ne,
+        r34_se,
+        r34_sw,
+        r34_nw
+    ]
+)
+
+wind50 = create_wind_field(
+    lon,
+    lat,
+    [
+        r50_ne,
+        r50_se,
+        r50_sw,
+        r50_nw
+    ]
+)
+
+wind64 = create_wind_field(
+    lon,
+    lat,
+    [
+        r64_ne,
+        r64_se,
+        r64_sw,
+        r64_nw
+    ]
+)
+
+
+folium.GeoJson(
+    mapping(
+        wind34
+    ),
+    style_function=lambda x: {
+        "color": "green",
+        "weight": 2,
+        "fillOpacity": 0
+    }
+).add_to(m)
+
+
+folium.GeoJson(
+    mapping(
+        wind50
+    ),
+    style_function=lambda x: {
+        "color": "orange",
+        "weight": 2,
+        "fillOpacity": 0
+    }
+).add_to(m)
+
+
+folium.GeoJson(
+    mapping(
+        wind64
+    ),
+    style_function=lambda x: {
+        "color": "red",
+        "weight": 2,
+        "fillOpacity": 0
+    }
+).add_to(m)
+
+
+# TRAYECTORIA
+
+folium.PolyLine(
+    locations=list(
+        zip(
+            track_lats,
+            track_lons
+        )
+    ),
+    color="black",
+    weight=2,
+    dash_array="8, 8"
+).add_to(m)
+
+
+# PUNTOS DE PRONÓSTICO
+
+for h, tx, ty in zip(
+    forecast_hours,
+    track_lons,
+    track_lats
 ):
-
-    m = folium.Map(
-        location=[
-            center_lat,
-            center_lon
-        ],
-        zoom_start=5,
-        tiles="OpenStreetMap"
-    )
-
-    # Campo 34 kt
-
-    wind34 = create_wind_field(
-        center_lon,
-        center_lat,
-        [
-            r34_ne,
-            r34_se,
-            r34_sw,
-            r34_nw
-        ]
-    )
-
-    # Campo 50 kt
-
-    wind50 = create_wind_field(
-        center_lon,
-        center_lat,
-        [
-            r50_ne,
-            r50_se,
-            r50_sw,
-            r50_nw
-        ]
-    )
-
-    # Campo 64 kt
-
-    wind64 = create_wind_field(
-        center_lon,
-        center_lat,
-        [
-            r64_ne,
-            r64_se,
-            r64_sw,
-            r64_nw
-        ]
-    )
-
-    folium.GeoJson(
-        mapping(wind34),
-        style_function=lambda x: {
-            "color": "green",
-            "weight": 2,
-            "fillOpacity": 0
-        }
-    ).add_to(m)
-
-    folium.GeoJson(
-        mapping(wind50),
-        style_function=lambda x: {
-            "color": "orange",
-            "weight": 2,
-            "fillOpacity": 0
-        }
-    ).add_to(m)
-
-    folium.GeoJson(
-        mapping(wind64),
-        style_function=lambda x: {
-            "color": "red",
-            "weight": 2,
-            "fillOpacity": 0
-        }
-    ).add_to(m)
-
-    # Trayectoria completa
-
-    folium.PolyLine(
-        locations=list(
-            zip(
-                track_lats,
-                track_lons
-            )
-        ),
-        color="black",
-        weight=2,
-        dash_array="8, 8"
-    ).add_to(m)
-
-    # Puntos de pronóstico
-
-    for h, tx, ty in zip(
-        forecast_hours,
-        track_lons,
-        track_lats
-    ):
-
-        folium.CircleMarker(
-            location=[
-                ty,
-                tx
-            ],
-            radius=5,
-            color="black",
-            fill=True,
-            fill_opacity=1,
-            popup=f"Pronóstico: +{h} horas"
-        ).add_to(m)
-
-    # Centro actual de la simulación
 
     folium.CircleMarker(
         location=[
-            center_lat,
-            center_lon
+            ty,
+            tx
         ],
-        radius=9,
-        color="red",
+        radius=5,
+        color="black",
         fill=True,
-        fill_color="red",
         fill_opacity=1,
         popup=(
-            f"{name} — "
-            f"+{hora_actual} h — "
-            f"{wind_speed} kt"
+            f"Pronóstico: +{h} horas"
         )
     ).add_to(m)
 
-    # Punto seleccionado fijo
 
-    if punto is not None:
+# CENTRO ACTUAL
 
-        folium.CircleMarker(
-            location=[
-                punto[0],
-                punto[1]
-            ],
-            radius=7,
-            color="blue",
-            fill=True,
-            fill_color="blue",
-            fill_opacity=1,
-            popup="Punto seleccionado"
-        ).add_to(m)
-
-    m.fit_bounds([
-        [
-            min(track_lats) - 6,
-            min(track_lons) - 6
-        ],
-        [
-            max(track_lats) + 6,
-            max(track_lons) + 6
-        ]
-    ])
-
-    return m
+folium.CircleMarker(
+    location=[
+        lat,
+        lon
+    ],
+    radius=8,
+    color="red",
+    fill=True,
+    fill_color="red",
+    fill_opacity=1,
+    popup=(
+        f"{name} — "
+        f"{wind_speed} kt"
+    )
+).add_to(m)
 
 
-# ==========================================================
-# MAPA PRINCIPAL
-# ==========================================================
-
-col1, col2 = st.columns([
-    2,
-    1
+m.fit_bounds([
+    [
+        min(track_lats) - 6,
+        min(track_lons) - 6
+    ],
+    [
+        max(track_lats) + 6,
+        max(track_lons) + 6
+    ]
 ])
+
+
+col1, col2 = st.columns(
+    [2, 1]
+)
+
+
+# ==========================================================
+# COLUMNA DEL MAPA
+# ==========================================================
 
 with col1:
 
-    mapa_inicial = crear_mapa(
-        lat,
-        lon
-    )
-
     map_data = st_folium(
-        mapa_inicial,
+        m,
         width=None,
         height=600
     )
 
-    if map_data and map_data.get(
-        "last_clicked"
+
+    if (
+        map_data
+        and
+        map_data.get(
+            "last_clicked"
+        )
     ):
 
         clicked_lat = (
@@ -850,10 +1021,6 @@ with col1:
     )
 
 
-    # ======================================================
-    # INFORMACIÓN DEL PUNTO
-    # ======================================================
-
     if punto_seleccionado is not None:
 
         clicked_lat = (
@@ -863,6 +1030,11 @@ with col1:
         clicked_lon = (
             punto_seleccionado[1]
         )
+
+
+        # ==================================================
+        # VIENTO ACTUAL
+        # ==================================================
 
         estimated_wind, distance_nm, quadrant = (
             calcular_viento_en_punto(
@@ -886,33 +1058,45 @@ with col1:
             )
         )
 
+
         estimated_category = (
             get_category(
                 estimated_wind
             )
         )
 
+
         estimated_mph = (
             estimated_wind
-            * 1.15078
+            *
+            1.15078
         )
+
 
         angle = np.degrees(
             np.arctan2(
                 (
                     clicked_lon
-                    - lon
+                    -
+                    lon
                 )
-                * np.cos(
-                    np.radians(lat)
+                *
+                np.cos(
+                    np.radians(
+                        lat
+                    )
                 ),
                 clicked_lat
-                - lat
+                -
+                lat
             )
         )
 
+
         if angle < 0:
+
             angle += 360
+
 
         st.info(
             f"""
@@ -931,6 +1115,7 @@ with col1:
 """
         )
 
+
         st.success(
             f"""
 💨 **VIENTO ESTIMADO ACTUAL**
@@ -945,17 +1130,285 @@ with col1:
 
 
         # ==================================================
-        # BOTÓN DE SIMULACIÓN
+        # EVOLUCIÓN 72 HORAS
         # ==================================================
+
+        progression_hours = list(
+            range(
+                0,
+                73,
+                1
+            )
+        )
+
+        progression_wind_kt = []
+
+        progression_wind_mph = []
+
+        progression_distance = []
+
+
+        for future_h in progression_hours:
+
+            future_lat, future_lon = (
+                obtener_posicion_futura(
+                    future_h
+                )
+            )
+
+
+            future_wind, future_distance, future_quadrant = (
+                calcular_viento_en_punto(
+                    clicked_lat,
+                    clicked_lon,
+                    future_lat,
+                    future_lon,
+                    wind_speed,
+                    r34_ne,
+                    r34_se,
+                    r34_sw,
+                    r34_nw,
+                    r50_ne,
+                    r50_se,
+                    r50_sw,
+                    r50_nw,
+                    r64_ne,
+                    r64_se,
+                    r64_sw,
+                    r64_nw
+                )
+            )
+
+
+            progression_wind_kt.append(
+                future_wind
+            )
+
+            progression_wind_mph.append(
+                future_wind
+                *
+                1.15078
+            )
+
+            progression_distance.append(
+                future_distance
+            )
+
+
+        max_wind_kt = max(
+            progression_wind_kt
+        )
+
+        max_wind_mph = (
+            max_wind_kt
+            *
+            1.15078
+        )
+
+        max_index = (
+            progression_wind_kt.index(
+                max_wind_kt
+            )
+        )
+
+        max_hour = (
+            progression_hours[
+                max_index
+            ]
+        )
+
+
+        st.subheader(
+            "📈 Evolución del viento"
+        )
+
+
+        st.write(
+            "El punto permanece fijo mientras el centro "
+            "del ciclón sigue la trayectoria definida."
+        )
+
+
+        fig, ax = plt.subplots(
+            figsize=(9, 4.5)
+        )
+
+
+        ax.plot(
+            progression_hours,
+            progression_wind_mph,
+            linewidth=2
+        )
+
+
+        ax.axhline(
+            34 * 1.15078,
+            linestyle="--",
+            linewidth=1
+        )
+
+        ax.axhline(
+            50 * 1.15078,
+            linestyle="--",
+            linewidth=1
+        )
+
+        ax.axhline(
+            64 * 1.15078,
+            linestyle="--",
+            linewidth=1
+        )
+
+
+        ax.axvline(
+            max_hour,
+            linestyle=":",
+            linewidth=1
+        )
+
+
+        ax.set_xlabel(
+            "Horas desde la posición inicial"
+        )
+
+        ax.set_ylabel(
+            "Viento sostenido (mph)"
+        )
+
+        ax.set_title(
+            "Evolución del viento en el punto seleccionado"
+        )
+
+        ax.grid(
+            True,
+            alpha=0.3
+        )
+
+
+        st.pyplot(
+            fig,
+            use_container_width=True
+        )
+
+
+        st.metric(
+            "💨 Viento máximo esperado",
+            f"{max_wind_mph:.0f} mph",
+            f"en +{max_hour} horas"
+        )
+
+
+        # ==================================================
+        # PERIODOS
+        # ==================================================
+
+        def encontrar_periodo(
+            horas,
+            vientos,
+            umbral
+        ):
+
+            horas_dentro = []
+
+            for h, viento in zip(
+                horas,
+                vientos
+            ):
+
+                if viento >= umbral:
+
+                    horas_dentro.append(
+                        h
+                    )
+
+            if not horas_dentro:
+
+                return None, None
+
+            return (
+                min(horas_dentro),
+                max(horas_dentro)
+            )
+
+
+        entrada34, salida34 = encontrar_periodo(
+            progression_hours,
+            progression_wind_kt,
+            34
+        )
+
+        entrada50, salida50 = encontrar_periodo(
+            progression_hours,
+            progression_wind_kt,
+            50
+        )
+
+        entrada64, salida64 = encontrar_periodo(
+            progression_hours,
+            progression_wind_kt,
+            64
+        )
+
+
+        st.subheader(
+            "🌀 Periodos de viento"
+        )
+
+
+        periodos = {
+
+            "34 kt — Tormenta Tropical": (
+                entrada34,
+                salida34
+            ),
+
+            "50 kt": (
+                entrada50,
+                salida50
+            ),
+
+            "64 kt — Huracán": (
+                entrada64,
+                salida64
+            )
+        }
+
+
+        for nombre_umbral, periodo in periodos.items():
+
+            entrada, salida = periodo
+
+            if entrada is not None:
+
+                st.write(
+                    f"**{nombre_umbral}:** "
+                    f"entrada +{entrada} h → "
+                    f"salida +{salida} h"
+                )
+
+            else:
+
+                st.write(
+                    f"**{nombre_umbral}:** "
+                    "No alcanza este umbral."
+                )
+
+
+        # ==================================================
+        # LOOP DE 24 HORAS
+        # ==================================================
+
+        st.markdown("---")
 
         st.subheader(
             "🎬 Simulación de las próximas 24 horas"
         )
 
         st.write(
-            "El punto seleccionado permanece fijo mientras "
-            "el ciclón avanza por su trayectoria."
+            "Selecciona un punto en el mapa y observa "
+            "cómo el campo de viento se desplaza sobre él."
         )
+
 
         iniciar_simulacion = st.button(
             "▶️ Simular próximas 24 horas",
@@ -965,29 +1418,14 @@ with col1:
 
         if iniciar_simulacion:
 
-            st.session_state[
-                "simulando"
-            ] = True
-
             mapa_placeholder = st.empty()
 
             datos_placeholder = st.empty()
 
-            progression_hours = []
-
-            progression_wind_kt = []
-
-            progression_wind_mph = []
-
-
-            # ==============================================
-            # LOOP DE 24 HORAS
-            # ==============================================
 
             for future_h in range(
                 0,
-                25,
-                1
+                25
             ):
 
                 future_lat, future_lon = (
@@ -1022,38 +1460,223 @@ with col1:
 
                 future_wind_mph = (
                     future_wind
-                    * 1.15078
-                )
-
-
-                progression_hours.append(
-                    future_h
-                )
-
-                progression_wind_kt.append(
-                    future_wind
-                )
-
-                progression_wind_mph.append(
-                    future_wind_mph
+                    *
+                    1.15078
                 )
 
 
                 # ==========================================
-                # ACTUALIZAR MAPA
+                # MAPA DE ESTA HORA
                 # ==========================================
 
-                mapa_animacion = crear_mapa(
-                    future_lat,
+                mapa_animacion = folium.Map(
+                    location=[
+                        future_lat,
+                        future_lon
+                    ],
+                    zoom_start=5,
+                    tiles="OpenStreetMap"
+                )
+
+
+                # CONO
+
+                folium.GeoJson(
+                    mapping(
+                        cone_geom
+                    ),
+                    style_function=lambda x: {
+                        "fillColor": "white",
+                        "color": "red",
+                        "weight": 2,
+                        "fillOpacity": 0.20
+                    }
+                ).add_to(
+                    mapa_animacion
+                )
+
+
+                # CAMPO 34 KT
+
+                wind34_future = create_wind_field(
                     future_lon,
-                    future_h,
-                    (
+                    future_lat,
+                    [
+                        r34_ne,
+                        r34_se,
+                        r34_sw,
+                        r34_nw
+                    ]
+                )
+
+
+                folium.GeoJson(
+                    mapping(
+                        wind34_future
+                    ),
+                    style_function=lambda x: {
+                        "color": "green",
+                        "weight": 3,
+                        "fillOpacity": 0.10
+                    }
+                ).add_to(
+                    mapa_animacion
+                )
+
+
+                # CAMPO 50 KT
+
+                wind50_future = create_wind_field(
+                    future_lon,
+                    future_lat,
+                    [
+                        r50_ne,
+                        r50_se,
+                        r50_sw,
+                        r50_nw
+                    ]
+                )
+
+
+                folium.GeoJson(
+                    mapping(
+                        wind50_future
+                    ),
+                    style_function=lambda x: {
+                        "color": "orange",
+                        "weight": 3,
+                        "fillOpacity": 0.08
+                    }
+                ).add_to(
+                    mapa_animacion
+                )
+
+
+                # CAMPO 64 KT
+
+                wind64_future = create_wind_field(
+                    future_lon,
+                    future_lat,
+                    [
+                        r64_ne,
+                        r64_se,
+                        r64_sw,
+                        r64_nw
+                    ]
+                )
+
+
+                folium.GeoJson(
+                    mapping(
+                        wind64_future
+                    ),
+                    style_function=lambda x: {
+                        "color": "red",
+                        "weight": 3,
+                        "fillOpacity": 0.08
+                    }
+                ).add_to(
+                    mapa_animacion
+                )
+
+
+                # TRAYECTORIA
+
+                folium.PolyLine(
+                    locations=list(
+                        zip(
+                            track_lats,
+                            track_lons
+                        )
+                    ),
+                    color="black",
+                    weight=2,
+                    dash_array="8, 8"
+                ).add_to(
+                    mapa_animacion
+                )
+
+
+                # POSICIONES PRONOSTICADAS
+
+                for h, tx, ty in zip(
+                    forecast_hours,
+                    track_lons,
+                    track_lats
+                ):
+
+                    folium.CircleMarker(
+                        location=[
+                            ty,
+                            tx
+                        ],
+                        radius=4,
+                        color="black",
+                        fill=True,
+                        fill_opacity=1,
+                        popup=(
+                            f"Pronóstico: +{h} horas"
+                        )
+                    ).add_to(
+                        mapa_animacion
+                    )
+
+
+                # CENTRO MÓVIL
+
+                folium.CircleMarker(
+                    location=[
+                        future_lat,
+                        future_lon
+                    ],
+                    radius=9,
+                    color="red",
+                    fill=True,
+                    fill_color="red",
+                    fill_opacity=1,
+                    popup=(
+                        f"{name} — "
+                        f"+{future_h} h — "
+                        f"{wind_speed} kt"
+                    )
+                ).add_to(
+                    mapa_animacion
+                )
+
+
+                # PUNTO FIJO
+
+                folium.CircleMarker(
+                    location=[
                         clicked_lat,
                         clicked_lon
-                    )
+                    ],
+                    radius=8,
+                    color="blue",
+                    fill=True,
+                    fill_color="blue",
+                    fill_opacity=1,
+                    popup="Punto seleccionado"
+                ).add_to(
+                    mapa_animacion
                 )
 
-                mapa_placeholder.empty()
+
+                mapa_animacion.fit_bounds([
+                    [
+                        min(track_lats) - 6,
+                        min(track_lons) - 6
+                    ],
+                    [
+                        max(track_lats) + 6,
+                        max(track_lons) + 6
+                    ]
+                ])
+
+
+                # ==========================================
+                # MOSTRAR MAPA
+                # ==========================================
 
                 with mapa_placeholder:
 
@@ -1061,12 +1684,12 @@ with col1:
                         mapa_animacion,
                         width=None,
                         height=600,
-                        key=f"animacion_{future_h}"
+                        key=f"loop_24h_{future_h}"
                     )
 
 
                 # ==========================================
-                # INFORMACIÓN EN TIEMPO REAL
+                # INFORMACIÓN
                 # ==========================================
 
                 future_category = (
@@ -1076,133 +1699,46 @@ with col1:
                 )
 
 
-                datos_placeholder.empty()
-
                 with datos_placeholder:
 
                     st.info(
                         f"""
 ### ⏱️ +{future_h} horas
 
-**Centro:** {future_lat:.4f}°N,
-{abs(future_lon):.4f}°W
+**Centro del ciclón:**  
+{future_lat:.4f}°N, {abs(future_lon):.4f}°W
 
-**Distancia al punto:** {future_distance:.1f} NM
+**Distancia al punto:**  
+{future_distance:.1f} NM
 
-**Viento en el punto:** 
-### {future_wind_mph:.0f} mph
+**Viento en el punto:**
 
-**Clasificación:** {future_category}
+# {future_wind_mph:.0f} mph
 
-**Cuadrante:** {future_quadrant}
+**Clasificación:**  
+{future_category}
+
+**Cuadrante:**  
+{future_quadrant}
 """
                     )
 
 
-                # Velocidad de animación
+                # VELOCIDAD DEL LOOP
 
                 time.sleep(
                     0.5
                 )
 
 
-            # ==============================================
-            # RESULTADO FINAL
-            # ==============================================
-
-            max_wind_kt = max(
-                progression_wind_kt
-            )
-
-            max_wind_mph = (
-                max_wind_kt
-                * 1.15078
-            )
-
-            max_index = (
-                progression_wind_kt.index(
-                    max_wind_kt
-                )
-            )
-
-            max_hour = (
-                progression_hours[
-                    max_index
-                ]
+            st.success(
+                "✅ Simulación de 24 horas completada."
             )
 
 
-            st.subheader(
-                "📊 Resumen de la simulación"
-            )
-
-            st.metric(
-                "💨 Viento máximo",
-                f"{max_wind_mph:.0f} mph",
-                f"en +{max_hour} horas"
-            )
-
-
-            # ==============================================
-            # GRÁFICO
-            # ==============================================
-
-            fig, ax = plt.subplots(
-                figsize=(9, 4.5)
-            )
-
-            ax.plot(
-                progression_hours,
-                progression_wind_mph,
-                linewidth=2
-            )
-
-            ax.axhline(
-                34 * 1.15078,
-                linestyle="--",
-                linewidth=1
-            )
-
-            ax.axhline(
-                50 * 1.15078,
-                linestyle="--",
-                linewidth=1
-            )
-
-            ax.axhline(
-                64 * 1.15078,
-                linestyle="--",
-                linewidth=1
-            )
-
-            ax.axvline(
-                max_hour,
-                linestyle=":",
-                linewidth=1
-            )
-
-            ax.set_xlabel(
-                "Horas desde la posición inicial"
-            )
-
-            ax.set_ylabel(
-                "Viento sostenido (mph)"
-            )
-
-            ax.set_title(
-                "Viento en el punto durante las próximas 24 horas"
-            )
-
-            ax.grid(
-                True,
-                alpha=0.3
-            )
-
-            st.pyplot(
-                fig,
-                use_container_width=True
-            )
-
+# ==========================================================
+# COLUMNA DERECHA
+# ==========================================================
 
 with col2:
 
@@ -1210,19 +1746,27 @@ with col2:
         "Boletín de Advertencia"
     )
 
+
     st.markdown(
         f"""
-    **SISTEMA:** {name}  
-    **CLASIFICACIÓN:** {category_str}  
-    **UBICACIÓN ACTUAL:** {lat:.1f}°N {abs(lon):.1f}°W  
-    **VIENTOS MÁXIMOS:** {wind_speed} nudos (~{int(wind_speed * 1.852)} km/h)  
-    **MOVIMIENTO ACTUAL:** Rumbo {heading}° a {forward_speed} kt  
-    """
+**SISTEMA:** {name}  
+
+**CLASIFICACIÓN:** {category_str}  
+
+**UBICACIÓN ACTUAL:** {lat:.1f}°N {abs(lon):.1f}°W  
+
+**VIENTOS MÁXIMOS:** {wind_speed} nudos
+(~{int(wind_speed * 1.852)} km/h)  
+
+**MOVIMIENTO ACTUAL:** Rumbo {heading}°
+a {forward_speed} kt
+"""
     )
 
+
     st.info(
-        "Nota didáctica: El cono representa el área probable "
-        "del centro del ciclón en las próximas 72 horas. "
-        "Los efectos del viento y lluvia se extienden "
-        "significativamente fuera de esta zona."
+        "Nota didáctica: El cono representa el área "
+        "probable del centro del ciclón en las próximas "
+        "72 horas. Los efectos del viento y lluvia se "
+        "extienden significativamente fuera de esta zona."
     )
