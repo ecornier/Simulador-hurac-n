@@ -70,8 +70,11 @@ if modo == "Ciclón tropical histórico":
     if modo == "Ciclón tropical histórico":
         partes_posicion = posicion.split("—")
         coordenadas = partes_posicion[1].strip().split(",")
-        lat = float(coordenadas[0].strip().replace("N", "").replace("S", "-"))
-        lon = float(coordenadas[1].strip().replace("W", "").replace("E", "-"))
+        lat_text = coordenadas[0].strip()
+lon_text = coordenadas[1].strip()
+
+lat = float(lat_text.replace("N", "").replace("S", "-"))
+lon = float(lon_text.replace("W", "-").replace("E", ""))
         
 if modo == "Huracán hipotético":
     lat = st.sidebar.number_input(
