@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import folium
-from folium import plugins
 from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
 from streamlit_folium import st_folium
@@ -298,31 +297,24 @@ r64_nw = st.sidebar.number_input(
 def get_category(wind):
 
     if wind < 34:
-
         return "Depresión Tropical"
 
     elif wind < 64:
-
         return "Tormenta Tropical"
 
     elif wind < 83:
-
         return "Huracán Cat 1"
 
     elif wind < 96:
-
         return "Huracán Cat 2"
 
     elif wind < 113:
-
         return "Huracán Cat 3 (Mayor)"
 
     elif wind < 137:
-
         return "Huracán Cat 4 (Mayor)"
 
     else:
-
         return "Huracán Cat 5 (Mayor)"
 
 
@@ -538,7 +530,6 @@ def calcular_viento_en_punto(
     )
 
     if angle < 0:
-
         angle += 360
 
     if 0 <= angle < 90:
@@ -555,7 +546,7 @@ def calcular_viento_en_punto(
 
         r34 = r34_se
         r50 = r50_se
-        r64 = r50_se
+        r64 = r64_se
 
     elif 180 <= angle < 270:
 
@@ -1071,7 +1062,6 @@ with col1:
 
 
         if angle < 0:
-
             angle += 360
 
 
@@ -1501,27 +1491,20 @@ with col1:
         # MAPA DE ANIMACIÓN
         # ==================================================
 
+        # CAMBIO PRINCIPAL:
+        # Ya no usamos fit_bounds() aquí.
+        # El mapa conserva una vista amplia y estable.
+
         mapa_animacion = folium.Map(
             location=[
                 lat,
                 lon
             ],
             zoom_start=5,
-            tiles="OpenStreetMap"
-        )
-
-
-        # ==================================================
-        # BOTÓN PANTALLA COMPLETA
-        # ==================================================
-
-        plugins.Fullscreen(
-            position="topright",
-            title="Pantalla completa",
-            title_cancel="Salir de pantalla completa",
-            force_separate_button=True
-        ).add_to(
-            mapa_animacion
+            min_zoom=3,
+            max_zoom=10,
+            tiles="OpenStreetMap",
+            control_scale=True
         )
 
 
@@ -1665,20 +1648,8 @@ with col1:
         )
 
 
-        mapa_animacion.fit_bounds([
-            [
-                min(track_lats) - 6,
-                min(track_lons) - 6
-            ],
-            [
-                max(track_lats) + 6,
-                max(track_lons) + 6
-            ]
-        ])
-
-
         # ==================================================
-        # NOMBRES JAVASCRIPT
+        # CONTROL DE ANIMACIÓN
         # ==================================================
 
         map_name = mapa_animacion.get_name()
@@ -1695,10 +1666,6 @@ with col1:
             animation_frames
         )
 
-
-        # ==================================================
-        # CONTROL FOLIUM REAL
-        # ==================================================
 
         class AnimationControl(MacroElement):
 
@@ -1918,10 +1885,6 @@ with col1:
                                 "click",
                                 function() {
 
-                                    // -------------------------------------
-                                    // PAUSAR
-                                    // -------------------------------------
-
                                     if (
                                         animationTimer !== null
                                     ) {
@@ -1940,10 +1903,6 @@ with col1:
                                     }
 
 
-                                    // -------------------------------------
-                                    // REINICIAR SI TERMINÓ
-                                    // -------------------------------------
-
                                     if (
                                         frameIndex >=
                                         frames.length - 1
@@ -1956,10 +1915,6 @@ with col1:
                                         );
                                     }
 
-
-                                    // -------------------------------------
-                                    // REPRODUCIR
-                                    // -------------------------------------
 
                                     button.innerHTML =
                                         "⏸️ Pausar";
@@ -2005,7 +1960,6 @@ with col1:
                                                             "<br><b>✅ Simulación completada</b>";
 
                                                     }
-
 
                                                     return;
                                                 }
@@ -2076,15 +2030,11 @@ with col1:
                                 frames[index];
 
 
-                            // CENTRO
-
                             centerMarker.setLatLng([
                                 frame.lat,
                                 frame.lon
                             ]);
 
-
-                            // 34 KT
 
                             wind34Layer.setLatLngs(
                                 convertirCoordenadas(
@@ -2093,8 +2043,6 @@ with col1:
                             );
 
 
-                            // 50 KT
-
                             wind50Layer.setLatLngs(
                                 convertirCoordenadas(
                                     frame.wind50.geometry.coordinates[0]
@@ -2102,16 +2050,12 @@ with col1:
                             );
 
 
-                            // 64 KT
-
                             wind64Layer.setLatLngs(
                                 convertirCoordenadas(
                                     frame.wind64.geometry.coordinates[0]
                                 )
                             );
 
-
-                            // INFORMACIÓN
 
                             var info =
                                 document.getElementById(
@@ -2149,10 +2093,6 @@ with col1:
 
                         }
 
-
-                        // =================================================
-                        // FRAME INICIAL
-                        // =================================================
 
                         renderFrame(
                             0
