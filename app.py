@@ -67,11 +67,15 @@ if modo == "Ciclón tropical histórico":
         "Posición histórica",
         opciones_posicion
     )
-    if modo == "Ciclón tropical histórico":
-        partes_posicion = posicion.split("—")
-        coordenadas = partes_posicion[1].strip().split(",")
-        lat_text = coordenadas[0].strip()
-lon_text = coordenadas[1].strip()
+ if modo == "Ciclón tropical histórico":
+    partes_posicion = posicion.split("—")
+    coordenadas = partes_posicion[1].strip().split(",")
+
+    lat_text = coordenadas[0].strip()
+    lon_text = coordenadas[1].strip()
+
+    lat = float(lat_text.replace("N", "").replace("S", "-"))
+    lon = float(lon_text.replace("W", "-").replace("E", ""))
 
 lat = float(lat_text.replace("N", "").replace("S", "-"))
 lon = float(lon_text.replace("W", "-").replace("E", ""))
