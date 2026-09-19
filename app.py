@@ -42,6 +42,10 @@ if modo == "Ciclón tropical histórico":
             "Ernesto (2024)"
         ]
     )
+    if modo == "Ciclón tropical histórico":
+    datos_hurdat = descargar_hurdat()
+    datos_ciclon = buscar_ciclon(datos_hurdat, ciclón)
+    st.sidebar.write(datos_ciclon)
 lat = lat = st.sidebar.number_input(
     "Latitud Inicial (°N)",
     min_value=10.0,
