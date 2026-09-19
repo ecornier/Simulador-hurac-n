@@ -21,6 +21,10 @@ st.set_page_config(page_title="Simulador de Huracanes NHC", layout="wide")
 st.title("🌀 Simulador Académico de Huracanes (Estilo NHC)")
 
 st.sidebar.header("Parámetros del Ciclón")
+modo = st.sidebar.radio(
+    "Modo de simulación",
+    ["Huracán hipotético", "Ciclón tropical histórico"]
+)
 
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
 lat = lat = st.sidebar.number_input(
