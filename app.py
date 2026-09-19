@@ -1694,7 +1694,7 @@ with col1:
                         mapa_animacion,
                         width=None,
                         height=600,
-                        key=f"loop_24h_{future_h}"
+                        key="loop_24h"
                     )
 
 
