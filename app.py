@@ -40,6 +40,7 @@ if modo == "Ciclón tropical histórico":
             "Erin (2007)",
             "Ernesto (2024)"
         ]
+    (
     
 
 if modo == "Ciclón tropical histórico":
