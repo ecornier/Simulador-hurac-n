@@ -319,7 +319,114 @@ def create_wind_field(center_lon, center_lat, radii):
 
     return Polygon(coordinates)
 
+def calcular_viento_en_punto(
+    point_lat,
+    point_lon,
+    future_lat,
+    future_lon,
+    wind_speed,
+    r34_ne, r34_se, r34_sw, r34_nw,
+    r50_ne, r50_se, r50_sw, r50_nw,
+    r64_ne, r64_se, r64_sw, r64_nw
+):
 
+    lat_diff = point_lat - future_lat
+    lon_diff = point_lon - future_lon
+
+    distance_nm = np.sqrt(
+        (lat_diff * 60.0) ** 2
+        +
+        (
+            lon_diff
+            * 60.0
+            * np.cos(np.radians(future_lat))
+        ) ** 2
+    )
+
+    angle = np.degrees(
+        np.arctan2(
+            lon_diff * np.cos(np.radians(future_lat)),
+            lat_diff
+        )
+    )
+
+    if angle < 0:
+        angle += 360
+
+    if 0 <= angle < 90:
+        quadrant = "NE"
+        r34 = r34_ne
+        r50 = r50_ne
+        r64 = r64_ne
+
+    elif 90 <= angle < 180:
+        quadrant = "SE"
+        r34 = r34_se
+        r50 = r50_se
+        r64 = r64_se
+
+    elif 180 <= angle < 270:
+        quadrant = "SW"
+        r34 = r34_sw
+        r50 = r50_sw
+        r64 = r64_sw
+
+    else:
+        quadrant = "NW"
+        r34 = r34_nw
+        r50 = r50_nw
+        r64 = r64_nw
+
+    if distance_nm <= r64 and r64 > 0:
+
+        fraction = distance_nm / r64
+
+        estimated_wind = wind_speed - (
+            (wind_speed - 64) * fraction
+        )
+
+    elif distance_nm <= r50 and r50 > r64:
+
+        fraction = (
+            distance_nm - r64
+        ) / (
+            r50 - r64
+        )
+
+        estimated_wind = 64 - (14 * fraction)
+
+    elif distance_nm <= r34 and r34 > r50:
+
+        fraction = (
+            distance_nm - r50
+        ) / (
+            r34 - r50
+        )
+
+        estimated_wind = 50 - (16 * fraction)
+
+    elif distance_nm <= r34 and r34 > 0:
+
+        estimated_wind = 34
+
+    else:
+
+        if r34 > 0:
+            estimated_wind = 34 * max(
+                0,
+                1 - (
+                    distance_nm - r34
+                ) / 50
+            )
+        else:
+            estimated_wind = 0
+
+    estimated_wind = max(
+        0,
+        min(wind_speed, estimated_wind)
+    )
+
+    return estimated_wind, distance_nm, quadrant
 forecast_hours = [0, 12, 24, 36, 48, 72]
 nhc_radii_deg = [0.0, 0.45, 0.75, 1.10, 1.45, 2.10]
 
