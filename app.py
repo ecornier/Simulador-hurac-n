@@ -30,7 +30,11 @@ modo = st.sidebar.radio(
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
 if modo == "Ciclón tropical histórico":
     ciclón = st.sidebar.selectbox(
-    
+    if modo == "Ciclón tropical histórico":
+    datos_hurdat = descargar_hurdat()
+    datos_maria = buscar_ciclon(datos_hurdat, ciclón)
+
+    st.sidebar.write(datos_maria)
         "Ciclón histórico",
         [
             "Irma (2017)",
