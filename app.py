@@ -1202,7 +1202,8 @@ with col1:
 
         st.write(
             "Usa el botón ▶️ dentro del mapa para iniciar "
-            "la simulación. El punto azul permanece fijo."
+            "la simulación. Haz clic en el mapa para mover "
+            "el punto azul."
         )
 
 
@@ -1293,8 +1294,7 @@ with col1:
 
 
             # ==================================================
-            # CONVERTIR DIRECTAMENTE A COORDENADAS LEAFLET
-            # [lat, lon]
+            # COORDENADAS LEAFLET [LAT, LON]
             # ==================================================
 
             wind34_coords = [
@@ -1316,25 +1316,15 @@ with col1:
             animation_frames.append(
                 {
                     "hour": future_h,
-
                     "lat": future_lat,
-
                     "lon": future_lon,
-
                     "wind_mph": future_wind_mph,
-
                     "wind_kt": future_wind,
-
                     "distance": future_distance,
-
                     "category": future_category,
-
                     "quadrant": future_quadrant,
-
                     "wind34": wind34_coords,
-
                     "wind50": wind50_coords,
-
                     "wind64": wind64_coords
                 }
             )
@@ -1417,7 +1407,8 @@ with col1:
             ],
             color="green",
             weight=3,
-            fill=False
+            fill=False,
+            bubbling_mouse_events=True
         ).add_to(
             mapa_animacion
         )
@@ -1430,7 +1421,8 @@ with col1:
             ],
             color="orange",
             weight=3,
-            fill=False
+            fill=False,
+            bubbling_mouse_events=True
         ).add_to(
             mapa_animacion
         )
@@ -1443,7 +1435,8 @@ with col1:
             ],
             color="red",
             weight=3,
-            fill=False
+            fill=False,
+            bubbling_mouse_events=True
         ).add_to(
             mapa_animacion
         )
@@ -1463,7 +1456,8 @@ with col1:
             fill=True,
             fill_color="red",
             fill_opacity=1,
-            popup=f"{name} — {wind_speed} kt"
+            popup=f"{name} — {wind_speed} kt",
+            bubbling_mouse_events=True
         ).add_to(
             mapa_animacion
         )
@@ -1473,7 +1467,7 @@ with col1:
         # PUNTO AZUL FIJO
         # ==================================================
 
-        folium.CircleMarker(
+        fixed_point_marker = folium.CircleMarker(
             location=[
                 punto_fijo_lat,
                 punto_fijo_lon
@@ -1484,14 +1478,15 @@ with col1:
             fill_color="blue",
             fill_opacity=1,
             weight=3,
-            popup="📍 Punto seleccionado"
+            popup="📍 Punto seleccionado",
+            bubbling_mouse_events=True
         ).add_to(
             mapa_animacion
         )
 
 
         # ==================================================
-        # CONTROL DE ANIMACIÓN
+        # NOMBRES JAVASCRIPT
         # ==================================================
 
         map_name = mapa_animacion.get_name()
@@ -1504,11 +1499,17 @@ with col1:
 
         center_marker_name = center_marker.get_name()
 
+        fixed_point_marker_name = fixed_point_marker.get_name()
+
 
         frames_json = json.dumps(
             animation_frames
         )
 
+
+        # ==========================================================
+        # CONTROL DE ANIMACIÓN
+        # ==========================================================
 
         class AnimationControl(MacroElement):
 
@@ -1519,7 +1520,21 @@ with col1:
                 wind50_name,
                 wind64_name,
                 center_marker_name,
-                frames_json
+                fixed_point_marker_name,
+                frames_json,
+                wind_speed,
+                r34_ne,
+                r34_se,
+                r34_sw,
+                r34_nw,
+                r50_ne,
+                r50_se,
+                r50_sw,
+                r50_nw,
+                r64_ne,
+                r64_se,
+                r64_sw,
+                r64_nw
             ):
 
                 super().__init__()
@@ -1536,7 +1551,26 @@ with col1:
 
                 self.center_marker_name = center_marker_name
 
+                self.fixed_point_marker_name = fixed_point_marker_name
+
                 self.frames_json = frames_json
+
+                self.wind_speed = wind_speed
+
+                self.r34_ne = r34_ne
+                self.r34_se = r34_se
+                self.r34_sw = r34_sw
+                self.r34_nw = r34_nw
+
+                self.r50_ne = r50_ne
+                self.r50_se = r50_se
+                self.r50_sw = r50_sw
+                self.r50_nw = r50_nw
+
+                self.r64_ne = r64_ne
+                self.r64_se = r64_se
+                self.r64_sw = r64_sw
+                self.r64_nw = r64_nw
 
 
                 self._template = Template(
@@ -1560,8 +1594,60 @@ with col1:
                         var centerMarker =
                             {{ this.center_marker_name }};
 
+                        var fixedPointMarker =
+                            {{ this.fixed_point_marker_name }};
+
                         var frames =
                             {{ this.frames_json | safe }};
+
+
+                        // =================================================
+                        // PARÁMETROS DEL MODELO
+                        // =================================================
+
+                        var windSpeed =
+                            {{ this.wind_speed }};
+
+                        var r34_ne =
+                            {{ this.r34_ne }};
+
+                        var r34_se =
+                            {{ this.r34_se }};
+
+                        var r34_sw =
+                            {{ this.r34_sw }};
+
+                        var r34_nw =
+                            {{ this.r34_nw }};
+
+                        var r50_ne =
+                            {{ this.r50_ne }};
+
+                        var r50_se =
+                            {{ this.r50_se }};
+
+                        var r50_sw =
+                            {{ this.r50_sw }};
+
+                        var r50_nw =
+                            {{ this.r50_nw }};
+
+                        var r64_ne =
+                            {{ this.r64_ne }};
+
+                        var r64_se =
+                            {{ this.r64_se }};
+
+                        var r64_sw =
+                            {{ this.r64_sw }};
+
+                        var r64_nw =
+                            {{ this.r64_nw }};
+
+
+                        // =================================================
+                        // ESTADO
+                        // =================================================
 
                         var frameIndex = 0;
 
@@ -1569,12 +1655,283 @@ with col1:
 
 
                         // =================================================
+                        // PUNTO AZUL
+                        // =================================================
+
+                        var pointLat =
+                            fixedPointMarker.getLatLng().lat;
+
+                        var pointLon =
+                            fixedPointMarker.getLatLng().lng;
+
+
+                        // =================================================
+                        // CALCULAR VIENTO EN EL PUNTO
+                        // =================================================
+
+                        function calcularVientoPunto(
+                            currentLat,
+                            currentLon,
+                            frame
+                        ) {
+
+                            var latDiff =
+                                pointLat - currentLat;
+
+                            var lonDiff =
+                                pointLon - currentLon;
+
+
+                            var distanceNm =
+                                Math.sqrt(
+                                    Math.pow(
+                                        latDiff * 60.0,
+                                        2
+                                    )
+                                    +
+                                    Math.pow(
+                                        lonDiff
+                                        *
+                                        60.0
+                                        *
+                                        Math.cos(
+                                            currentLat
+                                            *
+                                            Math.PI
+                                            /
+                                            180
+                                        ),
+                                        2
+                                    )
+                                );
+
+
+                            var angle =
+                                Math.atan2(
+                                    lonDiff
+                                    *
+                                    Math.cos(
+                                        currentLat
+                                        *
+                                        Math.PI
+                                        /
+                                        180
+                                    ),
+                                    latDiff
+                                )
+                                *
+                                180
+                                /
+                                Math.PI;
+
+
+                            if (angle < 0) {
+
+                                angle += 360;
+
+                            }
+
+
+                            var quadrant;
+
+                            var r34;
+                            var r50;
+                            var r64;
+
+
+                            if (
+                                angle >= 0
+                                &&
+                                angle < 90
+                            ) {
+
+                                quadrant = "NE";
+
+                                r34 = r34_ne;
+                                r50 = r50_ne;
+                                r64 = r64_ne;
+
+                            }
+
+                            else if (
+                                angle >= 90
+                                &&
+                                angle < 180
+                            ) {
+
+                                quadrant = "SE";
+
+                                r34 = r34_se;
+                                r50 = r50_se;
+                                r64 = r64_se;
+
+                            }
+
+                            else if (
+                                angle >= 180
+                                &&
+                                angle < 270
+                            ) {
+
+                                quadrant = "SW";
+
+                                r34 = r34_sw;
+                                r50 = r50_sw;
+                                r64 = r64_sw;
+
+                            }
+
+                            else {
+
+                                quadrant = "NW";
+
+                                r34 = r34_nw;
+                                r50 = r50_nw;
+                                r64 = r64_nw;
+
+                            }
+
+
+                            var estimatedWind;
+
+
+                            if (
+                                distanceNm <= r64
+                                &&
+                                r64 > 0
+                            ) {
+
+                                var fraction =
+                                    distanceNm / r64;
+
+                                estimatedWind =
+                                    windSpeed
+                                    -
+                                    (
+                                        (windSpeed - 64)
+                                        *
+                                        fraction
+                                    );
+
+                            }
+
+                            else if (
+                                distanceNm <= r50
+                                &&
+                                r50 > r64
+                            ) {
+
+                                var fraction =
+                                    (
+                                        distanceNm - r64
+                                    )
+                                    /
+                                    (
+                                        r50 - r64
+                                    );
+
+                                estimatedWind =
+                                    64
+                                    -
+                                    (
+                                        14 * fraction
+                                    );
+
+                            }
+
+                            else if (
+                                distanceNm <= r34
+                                &&
+                                r34 > r50
+                            ) {
+
+                                var fraction =
+                                    (
+                                        distanceNm - r50
+                                    )
+                                    /
+                                    (
+                                        r34 - r50
+                                    );
+
+                                estimatedWind =
+                                    50
+                                    -
+                                    (
+                                        16 * fraction
+                                    );
+
+                            }
+
+                            else if (
+                                distanceNm <= r34
+                                &&
+                                r34 > 0
+                            ) {
+
+                                estimatedWind =
+                                    34;
+
+                            }
+
+                            else {
+
+                                if (r34 > 0) {
+
+                                    estimatedWind =
+                                        34
+                                        *
+                                        Math.max(
+                                            0,
+                                            1
+                                            -
+                                            (
+                                                distanceNm - r34
+                                            )
+                                            /
+                                            50
+                                        );
+
+                                }
+
+                                else {
+
+                                    estimatedWind =
+                                        0;
+
+                                }
+
+                            }
+
+
+                            estimatedWind =
+                                Math.max(
+                                    0,
+                                    Math.min(
+                                        windSpeed,
+                                        estimatedWind
+                                    )
+                                );
+
+
+                            return {
+                                wind: estimatedWind,
+                                distance: distanceNm,
+                                quadrant: quadrant,
+                                angle: angle
+                            };
+
+                        }
+
+
+                        // =================================================
                         // INFORMACIÓN
                         // =================================================
 
-                        var infoControl = L.control({
-                            position: "topright"
-                        });
+                        var infoControl =
+                            L.control({
+                                position: "topright"
+                            });
 
 
                         infoControl.onAdd = function(map) {
@@ -1612,7 +1969,7 @@ with col1:
                                 "1.5";
 
                             div.style.minWidth =
-                                "230px";
+                                "250px";
 
 
                             div.innerHTML =
@@ -1636,7 +1993,73 @@ with col1:
 
 
                         // =================================================
-                        // BOTÓN PLAY
+                        // ACTUALIZAR INFORMACIÓN
+                        // =================================================
+
+                        function actualizarInfo(
+                            frame
+                        ) {
+
+                            var resultado =
+                                calcularVientoPunto(
+                                    frame.lat,
+                                    frame.lon,
+                                    frame
+                                );
+
+
+                            var windMph =
+                                resultado.wind
+                                *
+                                1.15078;
+
+
+                            var info =
+                                document.getElementById(
+                                    "animation-info"
+                                );
+
+
+                            if (!info) {
+
+                                return;
+
+                            }
+
+
+                            info.innerHTML =
+                                "<b>🎬 Simulación 24 horas</b><br>" +
+                                "⏱️ <b>+" +
+                                frame.hour +
+                                " horas</b><br>" +
+                                "📍 Centro: " +
+                                frame.lat.toFixed(4) +
+                                "°, " +
+                                Math.abs(
+                                    frame.lon
+                                ).toFixed(4) +
+                                "°W<br>" +
+                                "📍 Punto azul: " +
+                                pointLat.toFixed(4) +
+                                "°, " +
+                                Math.abs(
+                                    pointLon
+                                ).toFixed(4) +
+                                "°W<br>" +
+                                "📏 Distancia: " +
+                                resultado.distance.toFixed(1) +
+                                " NM<br>" +
+                                "💨 Viento: <b>" +
+                                windMph.toFixed(0) +
+                                " mph</b><br>" +
+                                "🌀 Cuadrante: " +
+                                resultado.quadrant;
+
+                        }
+
+
+                        // =================================================
+                        // BOTÓN PLAY / PAUSA / REINICIAR
                         // =================================================
 
                         var playControl =
@@ -1718,7 +2141,7 @@ with col1:
                                 "40px";
 
                             button.style.minWidth =
-                                "110px";
+                                "120px";
 
                             button.style.boxSizing =
                                 "border-box";
@@ -1729,10 +2152,82 @@ with col1:
                             );
 
 
+                            function iniciarAnimacion() {
+
+                                if (
+                                    animationTimer !== null
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                button.innerHTML =
+                                    "⏸️ Pausar";
+
+
+                                button.title =
+                                    "Pausar simulación";
+
+
+                                animationTimer =
+                                    setInterval(
+                                        function() {
+
+                                            if (
+                                                frameIndex
+                                                >=
+                                                frames.length - 1
+                                            ) {
+
+                                                clearInterval(
+                                                    animationTimer
+                                                );
+
+                                                animationTimer =
+                                                    null;
+
+                                                frameIndex =
+                                                    frames.length - 1;
+
+                                                renderFrame(
+                                                    frameIndex
+                                                );
+
+                                                button.innerHTML =
+                                                    "🔄 Reiniciar";
+
+                                                button.title =
+                                                    "Reiniciar simulación";
+
+                                                return;
+
+                                            }
+
+
+                                            frameIndex += 1;
+
+
+                                            renderFrame(
+                                                frameIndex
+                                            );
+
+                                        },
+                                        500
+                                    );
+
+                            }
+
+
                             L.DomEvent.on(
                                 button,
                                 "click",
                                 function() {
+
+                                    // ---------------------------------
+                                    // SI ESTÁ REPRODUCIENDO
+                                    // ---------------------------------
 
                                     if (
                                         animationTimer !== null
@@ -1746,81 +2241,41 @@ with col1:
                                             null;
 
                                         button.innerHTML =
-                                            "▶️ Play 24h";
+                                            "▶️ Continuar";
+
+                                        button.title =
+                                            "Continuar simulación";
 
                                         return;
+
                                     }
 
 
+                                    // ---------------------------------
+                                    // SI TERMINÓ
+                                    // ---------------------------------
+
                                     if (
-                                        frameIndex >=
+                                        frameIndex
+                                        >=
                                         frames.length - 1
                                     ) {
 
-                                        frameIndex = 0;
+                                        frameIndex =
+                                            0;
 
                                         renderFrame(
                                             frameIndex
                                         );
+
                                     }
 
 
-                                    button.innerHTML =
-                                        "⏸️ Pausar";
+                                    // ---------------------------------
+                                    // INICIAR / CONTINUAR
+                                    // ---------------------------------
 
-
-                                    animationTimer =
-                                        setInterval(
-                                            function() {
-
-                                                frameIndex += 1;
-
-
-                                                if (
-                                                    frameIndex >=
-                                                    frames.length
-                                                ) {
-
-                                                    clearInterval(
-                                                        animationTimer
-                                                    );
-
-                                                    animationTimer =
-                                                        null;
-
-
-                                                    frameIndex =
-                                                        frames.length - 1;
-
-
-                                                    button.innerHTML =
-                                                        "🔄 Reiniciar";
-
-
-                                                    var info =
-                                                        document.getElementById(
-                                                            "animation-info"
-                                                        );
-
-
-                                                    if (info) {
-
-                                                        info.innerHTML +=
-                                                            "<br><b>✅ Simulación completada</b>";
-
-                                                    }
-
-                                                    return;
-                                                }
-
-
-                                                renderFrame(
-                                                    frameIndex
-                                                );
-
-                                            },
-                                            500
-                                        );
+                                    iniciarAnimacion();
 
                                 }
                             );
@@ -2092,6 +2547,40 @@ with col1:
 
 
                         // =================================================
+                        // MOVER EL PUNTO AZUL CON CLIC
+                        // =================================================
+
+                        mapAnimation.on(
+                            "click",
+                            function(event) {
+
+                                pointLat =
+                                    event.latlng.lat;
+
+                                pointLon =
+                                    event.latlng.lng;
+
+
+                                fixedPointMarker.setLatLng(
+                                    [
+                                        pointLat,
+                                        pointLon
+                                    ]
+                                );
+
+
+                                fixedPointMarker.bringToFront();
+
+
+                                renderFrame(
+                                    frameIndex
+                                );
+
+                            }
+                        );
+
+
+                        // =================================================
                         // ACTUALIZAR FRAME
                         // =================================================
 
@@ -2156,7 +2645,7 @@ with col1:
 
 
                             // ---------------------------------------------
-                            // ASEGURAR VISIBILIDAD
+                            // VISIBILIDAD
                             // ---------------------------------------------
 
                             wind34Layer.bringToFront();
@@ -2167,44 +2656,16 @@ with col1:
 
                             centerMarker.bringToFront();
 
+                            fixedPointMarker.bringToFront();
+
 
                             // ---------------------------------------------
                             // INFORMACIÓN
                             // ---------------------------------------------
 
-                            var info =
-                                document.getElementById(
-                                    "animation-info"
-                                );
-
-
-                            if (info) {
-
-                                info.innerHTML =
-                                    "<b>🎬 Simulación 24 horas</b><br>" +
-                                    "⏱️ <b>+" +
-                                    frame.hour +
-                                    " horas</b><br>" +
-                                    "📍 Centro: " +
-                                    frame.lat.toFixed(4) +
-                                    "°, " +
-                                    Math.abs(
-                                        frame.lon
-                                    ).toFixed(4) +
-                                    "°W<br>" +
-                                    "📏 Distancia: " +
-                                    frame.distance.toFixed(1) +
-                                    " NM<br>" +
-                                    "💨 Viento: <b>" +
-                                    frame.wind_mph.toFixed(0) +
-                                    " mph</b><br>" +
-                                    "🌀 Clasificación: " +
-                                    frame.category +
-                                    "<br>" +
-                                    "🧭 Cuadrante: " +
-                                    frame.quadrant;
-
-                            }
+                            actualizarInfo(
+                                frame
+                            );
 
                         }
 
@@ -2213,7 +2674,9 @@ with col1:
                         // FRAME INICIAL
                         // =================================================
 
-                        renderFrame(0);
+                        renderFrame(
+                            0
+                        );
 
 
                     })();
@@ -2229,7 +2692,21 @@ with col1:
             wind50_name,
             wind64_name,
             center_marker_name,
-            frames_json
+            fixed_point_marker_name,
+            frames_json,
+            wind_speed,
+            r34_ne,
+            r34_se,
+            r34_sw,
+            r34_nw,
+            r50_ne,
+            r50_se,
+            r50_sw,
+            r50_nw,
+            r64_ne,
+            r64_se,
+            r64_sw,
+            r64_nw
         )
 
 
@@ -2240,7 +2717,8 @@ with col1:
 
         st.caption(
             "Cada 0.5 segundos representa 1 hora de simulación. "
-            "El punto azul permanece fijo."
+            "El centro y los campos de viento se desplazan juntos. "
+            "Haz clic en el mapa para mover el punto azul."
         )
 
 
