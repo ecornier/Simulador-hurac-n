@@ -4,19 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import folium
 from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 from streamlit_folium import st_folium
 
-from shapely.geometry import Point, Polygon
-from shapely.ops import unary_union
-from streamlit_folium import st_folium
 st.set_page_config(page_title="Simulador de Huracanes NHC", layout="wide")
 
 st.title("🌀 Simulador Académico de Huracanes (Estilo NHC)")
@@ -26,6 +18,7 @@ modo = st.sidebar.radio(
     "Modo de simulación",
     ["Huracán hipotético", "Ciclón tropical histórico"]
 )
+
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
 
 if modo == "Ciclón tropical histórico":
@@ -75,8 +68,19 @@ if modo == "Ciclón tropical histórico":
     lat_text = coordenadas[0].strip()
     lon_text = coordenadas[1].strip()
 
-    lat = float(lat_text.replace("N", "").replace("S", "-"))
-    lon = float(lon_text.replace("W", "-").replace("E", ""))
+    if lat_text.endswith("N"):
+        lat = float(lat_text[:-1])
+    elif lat_text.endswith("S"):
+        lat = -float(lat_text[:-1])
+    else:
+        lat = float(lat_text)
+
+    if lon_text.endswith("W"):
+        lon = -float(lon_text[:-1])
+    elif lon_text.endswith("E"):
+        lon = float(lon_text[:-1])
+    else:
+        lon = float(lon_text)
 
 if modo == "Huracán hipotético":
     lat = st.sidebar.number_input(
@@ -97,38 +101,134 @@ if modo == "Huracán hipotético":
         format="%.4f"
     )
 
-wind_speed = st.sidebar.slider("Vientos Sostenidos (nudos)", min_value=30, max_value=165, value=75, step=5)
-heading = st.sidebar.slider("Rumbo (°)", min_value=0, max_value=360, value=290, step=5)
-forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
+wind_speed = st.sidebar.slider(
+    "Vientos Sostenidos (nudos)",
+    min_value=30,
+    max_value=165,
+    value=75,
+    step=5
+)
 
+heading = st.sidebar.slider(
+    "Rumbo (°)",
+    min_value=0,
+    max_value=360,
+    value=290,
+    step=5
+)
 
-st.sidebar.markdown("---")
-st.sidebar.header("Wind Radii")
+forward_speed = st.sidebar.slider(
+    "Velocidad de Avance (kt)",
+    min_value=5,
+    max_value=25,
+    value=12,
+    step=1
+)
 
 st.sidebar.markdown("---")
 st.sidebar.header("Wind Radii")
 
 st.sidebar.subheader("34 kt — Tormenta Tropical")
-st.sidebar.header("Wind Radii")
 
-r34_ne = st.sidebar.number_input("34 kt — NE", min_value=0.0, max_value=500.0, value=120.0, step=5.0)
-r34_se = st.sidebar.number_input("34 kt — SE", min_value=0.0, max_value=500.0, value=100.0, step=5.0)
-r34_sw = st.sidebar.number_input("34 kt — SW", min_value=0.0, max_value=500.0, value=80.0, step=5.0)
-r34_nw = st.sidebar.number_input("34 kt — NW", min_value=0.0, max_value=500.0, value=100.0, step=5.0)
+r34_ne = st.sidebar.number_input(
+    "34 kt — NE",
+    min_value=0.0,
+    max_value=500.0,
+    value=120.0,
+    step=5.0
+)
+
+r34_se = st.sidebar.number_input(
+    "34 kt — SE",
+    min_value=0.0,
+    max_value=500.0,
+    value=100.0,
+    step=5.0
+)
+
+r34_sw = st.sidebar.number_input(
+    "34 kt — SW",
+    min_value=0.0,
+    max_value=500.0,
+    value=80.0,
+    step=5.0
+)
+
+r34_nw = st.sidebar.number_input(
+    "34 kt — NW",
+    min_value=0.0,
+    max_value=500.0,
+    value=100.0,
+    step=5.0
+)
 
 st.sidebar.subheader("50 kt")
 
-r50_ne = st.sidebar.number_input("50 kt — NE", min_value=0.0, max_value=400.0, value=70.0, step=5.0)
-r50_se = st.sidebar.number_input("50 kt — SE", min_value=0.0, max_value=400.0, value=60.0, step=5.0)
-r50_sw = st.sidebar.number_input("50 kt — SW", min_value=0.0, max_value=400.0, value=45.0, step=5.0)
-r50_nw = st.sidebar.number_input("50 kt — NW", min_value=0.0, max_value=400.0, value=60.0, step=5.0)
+r50_ne = st.sidebar.number_input(
+    "50 kt — NE",
+    min_value=0.0,
+    max_value=400.0,
+    value=70.0,
+    step=5.0
+)
+
+r50_se = st.sidebar.number_input(
+    "50 kt — SE",
+    min_value=0.0,
+    max_value=400.0,
+    value=60.0,
+    step=5.0
+)
+
+r50_sw = st.sidebar.number_input(
+    "50 kt — SW",
+    min_value=0.0,
+    max_value=400.0,
+    value=45.0,
+    step=5.0
+)
+
+r50_nw = st.sidebar.number_input(
+    "50 kt — NW",
+    min_value=0.0,
+    max_value=400.0,
+    value=60.0,
+    step=5.0
+)
 
 st.sidebar.subheader("64 kt — Huracán")
 
-r64_ne = st.sidebar.number_input("64 kt — NE", min_value=0.0, max_value=300.0, value=35.0, step=5.0)
-r64_se = st.sidebar.number_input("64 kt — SE", min_value=0.0, max_value=300.0, value=30.0, step=5.0)
-r64_sw = st.sidebar.number_input("64 kt — SW", min_value=0.0, max_value=300.0, value=20.0, step=5.0)
-r64_nw = st.sidebar.number_input("64 kt — NW", min_value=0.0, max_value=300.0, value=30.0, step=5.0)
+r64_ne = st.sidebar.number_input(
+    "64 kt — NE",
+    min_value=0.0,
+    max_value=300.0,
+    value=35.0,
+    step=5.0
+)
+
+r64_se = st.sidebar.number_input(
+    "64 kt — SE",
+    min_value=0.0,
+    max_value=300.0,
+    value=30.0,
+    step=5.0
+)
+
+r64_sw = st.sidebar.number_input(
+    "64 kt — SW",
+    min_value=0.0,
+    max_value=300.0,
+    value=20.0,
+    step=5.0
+)
+
+r64_nw = st.sidebar.number_input(
+    "64 kt — NW",
+    min_value=0.0,
+    max_value=300.0,
+    value=30.0,
+    step=5.0
+)
 
 
 def get_category(wind):
@@ -152,12 +252,6 @@ category_str = get_category(wind_speed)
 
 
 def create_wind_field(center_lon, center_lat, radii):
-    """
-    Crea un campo de viento redondeado utilizando
-    cuatro radios: NE, SE, SW y NW.
-    """
-
-    quadrant_angles = np.array([45, 135, 225, 315], dtype=float)
 
     quadrant_radii = np.array(radii, dtype=float)
 
@@ -168,6 +262,7 @@ def create_wind_field(center_lon, center_lat, radii):
     for angle in angles[:-1]:
 
         if angle >= 315 or angle < 45:
+
             r1 = quadrant_radii[3]
             r2 = quadrant_radii[0]
 
@@ -177,16 +272,19 @@ def create_wind_field(center_lon, center_lat, radii):
                 t = (angle + 45) / 90
 
         elif angle < 135:
+
             r1 = quadrant_radii[0]
             r2 = quadrant_radii[1]
             t = (angle - 45) / 90
 
         elif angle < 225:
+
             r1 = quadrant_radii[1]
             r2 = quadrant_radii[2]
             t = (angle - 135) / 90
 
         else:
+
             r1 = quadrant_radii[2]
             r2 = quadrant_radii[3]
             t = (angle - 225) / 90
@@ -232,6 +330,7 @@ circles = []
 rad_heading = np.radians(90 - heading)
 
 for h, r in zip(forecast_hours, nhc_radii_deg):
+
     dist_nm = forward_speed * h
     dist_deg = dist_nm / 60.0
 
@@ -275,7 +374,6 @@ m = folium.Map(
     tiles="OpenStreetMap"
 )
 
-# Cono de pronóstico
 folium.GeoJson(
     mapping(cone_geom),
     style_function=lambda x: {
@@ -286,7 +384,6 @@ folium.GeoJson(
     }
 ).add_to(m)
 
-# Radio 34 kt
 folium.GeoJson(
     mapping(wind34),
     style_function=lambda x: {
@@ -296,7 +393,6 @@ folium.GeoJson(
     }
 ).add_to(m)
 
-# Radio 50 kt
 folium.GeoJson(
     mapping(wind50),
     style_function=lambda x: {
@@ -306,7 +402,6 @@ folium.GeoJson(
     }
 ).add_to(m)
 
-# Radio 64 kt
 folium.GeoJson(
     mapping(wind64),
     style_function=lambda x: {
@@ -316,7 +411,6 @@ folium.GeoJson(
     }
 ).add_to(m)
 
-# Trayectoria
 folium.PolyLine(
     locations=list(zip(track_lats, track_lons)),
     color="black",
@@ -324,8 +418,12 @@ folium.PolyLine(
     dash_array="8, 8"
 ).add_to(m)
 
-# Puntos de pronóstico
-for h, tx, ty in zip(forecast_hours, track_lons, track_lats):
+for h, tx, ty in zip(
+    forecast_hours,
+    track_lons,
+    track_lats
+):
+
     folium.CircleMarker(
         location=[ty, tx],
         radius=5,
@@ -335,7 +433,6 @@ for h, tx, ty in zip(forecast_hours, track_lons, track_lats):
         popup=f"Pronóstico: +{h} horas"
     ).add_to(m)
 
-# Centro actual
 folium.CircleMarker(
     location=[lat, lon],
     radius=8,
@@ -346,16 +443,15 @@ folium.CircleMarker(
     popup=f"{name} — {wind_speed} kt"
 ).add_to(m)
 
-# Ajustar vista
 m.fit_bounds([
     [min(track_lats) - 6, min(track_lons) - 6],
     [max(track_lats) + 6, max(track_lons) + 6]
 ])
 
-# Crear las dos columnas
 col1, col2 = st.columns([2, 1])
 
 with col1:
+
     map_data = st_folium(
         m,
         width=None,
@@ -363,6 +459,7 @@ with col1:
     )
 
     if map_data and map_data.get("last_clicked"):
+
         clicked_lat = map_data["last_clicked"]["lat"]
         clicked_lon = map_data["last_clicked"]["lng"]
 
@@ -373,7 +470,9 @@ with col1:
         )
 
 with col2:
+
     st.subheader("Boletín de Advertencia")
+
     st.markdown(f"""
     **SISTEMA:** {name}  
     **CLASIFICACIÓN:** {category_str}  
@@ -382,4 +481,8 @@ with col2:
     **MOVIMIENTO ACTUAL:** Rumbo {heading}° a {forward_speed} kt  
     """)
 
-    st.info("Nota didáctica: El cono representa el área probable del centro del ciclón en las próximas 72 horas. Los efectos del viento y lluvia se extienden significativamente fuera de esta zona.")
+    st.info(
+        "Nota didáctica: El cono representa el área probable del centro "
+        "del ciclón en las próximas 72 horas. Los efectos del viento y "
+        "lluvia se extienden significativamente fuera de esta zona."
+    )
