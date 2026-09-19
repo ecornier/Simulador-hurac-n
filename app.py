@@ -42,8 +42,7 @@ if modo == "Ciclón tropical histórico":
         ]
     )
     
-
- if modo == "Ciclón tropical histórico":
+if modo == "Ciclón tropical histórico":
     datos_hurdat = descargar_hurdat()
     datos_ciclon = buscar_ciclon(datos_hurdat, ciclón.split(" (")[0])
 
