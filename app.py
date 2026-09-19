@@ -77,9 +77,6 @@ if modo == "Ciclón tropical histórico":
     lat = float(lat_text.replace("N", "").replace("S", "-"))
     lon = float(lon_text.replace("W", "-").replace("E", ""))
 
-lat = float(lat_text.replace("N", "").replace("S", "-"))
-lon = float(lon_text.replace("W", "-").replace("E", ""))
-        
 if modo == "Huracán hipotético":
     lat = st.sidebar.number_input(
         "Latitud Inicial (°N)",
