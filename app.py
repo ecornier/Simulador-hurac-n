@@ -1292,6 +1292,27 @@ with col1:
             )
 
 
+            # ==================================================
+            # CONVERTIR DIRECTAMENTE A COORDENADAS LEAFLET
+            # [lat, lon]
+            # ==================================================
+
+            wind34_coords = [
+                [float(y), float(x)]
+                for x, y in wind34_future.exterior.coords
+            ]
+
+            wind50_coords = [
+                [float(y), float(x)]
+                for x, y in wind50_future.exterior.coords
+            ]
+
+            wind64_coords = [
+                [float(y), float(x)]
+                for x, y in wind64_future.exterior.coords
+            ]
+
+
             animation_frames.append(
                 {
                     "hour": future_h,
@@ -1310,24 +1331,18 @@ with col1:
 
                     "quadrant": future_quadrant,
 
-                    "wind34": mapping(
-                        wind34_future
-                    ),
+                    "wind34": wind34_coords,
 
-                    "wind50": mapping(
-                        wind50_future
-                    ),
+                    "wind50": wind50_coords,
 
-                    "wind64": mapping(
-                        wind64_future
-                    )
+                    "wind64": wind64_coords
                 }
             )
 
 
-        # ==================================================
+        # ==========================================================
         # MAPA DE ANIMACIÓN
-        # ==================================================
+        # ==========================================================
 
         mapa_animacion = folium.Map(
             location=[
@@ -2077,36 +2092,6 @@ with col1:
 
 
                         // =================================================
-                        // CONVERTIR COORDENADAS GEOJSON → LEAFLET
-                        // =================================================
-
-                        function convertirCoordenadas(
-                            coordinates
-                        ) {
-
-                            var resultado = [];
-
-
-                            for (
-                                var i = 0;
-                                i < coordinates.length;
-                                i++
-                            ) {
-
-                                resultado.push([
-                                    coordinates[i][1],
-                                    coordinates[i][0]
-                                ]);
-
-                            }
-
-
-                            return resultado;
-
-                        }
-
-
-                        // =================================================
                         // ACTUALIZAR FRAME
                         // =================================================
 
@@ -2128,7 +2113,7 @@ with col1:
 
 
                             // ---------------------------------------------
-                            // CENTRO
+                            // MOVER CENTRO
                             // ---------------------------------------------
 
                             centerMarker.setLatLng([
@@ -2138,115 +2123,36 @@ with col1:
 
 
                             // ---------------------------------------------
-                            // COORDENADAS DE LOS CAMPOS
+                            // MOVER CAMPO 34 KT
                             // ---------------------------------------------
 
-                            var coords34 =
-                                convertirCoordenadas(
-                                    frame.wind34.geometry.coordinates[0]
-                                );
+                            wind34Layer.setLatLngs(
+                                frame.wind34
+                            );
+
+                            wind34Layer.redraw();
 
 
-                            var coords50 =
-                                convertirCoordenadas(
-                                    frame.wind50.geometry.coordinates[0]
-                                );
-
-
-                            var coords64 =
-                                convertirCoordenadas(
-                                    frame.wind64.geometry.coordinates[0]
-                                );
-
-
-                            // =================================================
-                            // MOVER CAMPO 34 KT
-                            // =================================================
-
-                            if (
-                                mapAnimation.hasLayer(
-                                    wind34Layer
-                                )
-                            ) {
-
-                                mapAnimation.removeLayer(
-                                    wind34Layer
-                                );
-
-                            }
-
-
-                            wind34Layer =
-                                L.polygon(
-                                    coords34,
-                                    {
-                                        color: "green",
-                                        weight: 3,
-                                        fill: false
-                                    }
-                                ).addTo(
-                                    mapAnimation
-                                );
-
-
-                            // =================================================
+                            // ---------------------------------------------
                             // MOVER CAMPO 50 KT
-                            // =================================================
+                            // ---------------------------------------------
 
-                            if (
-                                mapAnimation.hasLayer(
-                                    wind50Layer
-                                )
-                            ) {
+                            wind50Layer.setLatLngs(
+                                frame.wind50
+                            );
 
-                                mapAnimation.removeLayer(
-                                    wind50Layer
-                                );
-
-                            }
+                            wind50Layer.redraw();
 
 
-                            wind50Layer =
-                                L.polygon(
-                                    coords50,
-                                    {
-                                        color: "orange",
-                                        weight: 3,
-                                        fill: false
-                                    }
-                                ).addTo(
-                                    mapAnimation
-                                );
-
-
-                            // =================================================
+                            // ---------------------------------------------
                             // MOVER CAMPO 64 KT
-                            // =================================================
+                            // ---------------------------------------------
 
-                            if (
-                                mapAnimation.hasLayer(
-                                    wind64Layer
-                                )
-                            ) {
+                            wind64Layer.setLatLngs(
+                                frame.wind64
+                            );
 
-                                mapAnimation.removeLayer(
-                                    wind64Layer
-                                );
-
-                            }
-
-
-                            wind64Layer =
-                                L.polygon(
-                                    coords64,
-                                    {
-                                        color: "red",
-                                        weight: 3,
-                                        fill: false
-                                    }
-                                ).addTo(
-                                    mapAnimation
-                                );
+                            wind64Layer.redraw();
 
 
                             // ---------------------------------------------
@@ -2258,6 +2164,8 @@ with col1:
                             wind50Layer.bringToFront();
 
                             wind64Layer.bringToFront();
+
+                            centerMarker.bringToFront();
 
 
                             // ---------------------------------------------
