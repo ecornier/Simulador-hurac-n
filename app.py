@@ -27,6 +27,7 @@ modo = st.sidebar.radio(
     ["Huracán hipotético", "Ciclón tropical histórico"]
 )
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
+
 if modo == "Ciclón tropical histórico":
     ciclón = st.sidebar.selectbox(
         "Ciclón histórico",
@@ -41,7 +42,7 @@ if modo == "Ciclón tropical histórico":
             "Ernesto (2024)"
         ]
     )
-    
+
 if modo == "Ciclón tropical histórico":
     datos_hurdat = descargar_hurdat()
     datos_ciclon = buscar_ciclon(datos_hurdat, ciclón.split(" (")[0])
@@ -67,7 +68,7 @@ if modo == "Ciclón tropical histórico":
         "Posición histórica",
         opciones_posicion
     )
- if modo == "Ciclón tropical histórico":
+
     partes_posicion = posicion.split("—")
     coordenadas = partes_posicion[1].strip().split(",")
 
@@ -95,6 +96,7 @@ if modo == "Huracán hipotético":
         step=0.0001,
         format="%.4f"
     )
+
 wind_speed = st.sidebar.slider("Vientos Sostenidos (nudos)", min_value=30, max_value=165, value=75, step=5)
 heading = st.sidebar.slider("Rumbo (°)", min_value=0, max_value=360, value=290, step=5)
 forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
@@ -108,8 +110,6 @@ st.sidebar.header("Wind Radii")
 
 st.sidebar.subheader("34 kt — Tormenta Tropical")
 st.sidebar.header("Wind Radii")
-
-
 
 r34_ne = st.sidebar.number_input("34 kt — NE", min_value=0.0, max_value=500.0, value=120.0, step=5.0)
 r34_se = st.sidebar.number_input("34 kt — SE", min_value=0.0, max_value=500.0, value=100.0, step=5.0)
@@ -129,7 +129,8 @@ r64_ne = st.sidebar.number_input("64 kt — NE", min_value=0.0, max_value=300.0,
 r64_se = st.sidebar.number_input("64 kt — SE", min_value=0.0, max_value=300.0, value=30.0, step=5.0)
 r64_sw = st.sidebar.number_input("64 kt — SW", min_value=0.0, max_value=300.0, value=20.0, step=5.0)
 r64_nw = st.sidebar.number_input("64 kt — NW", min_value=0.0, max_value=300.0, value=30.0, step=5.0)
-    
+
+
 def get_category(wind):
     if wind < 34:
         return "Depresión Tropical"
@@ -146,30 +147,29 @@ def get_category(wind):
     else:
         return "Huracán Cat 5 (Mayor)"
 
+
 category_str = get_category(wind_speed)
+
+
 def create_wind_field(center_lon, center_lat, radii):
     """
     Crea un campo de viento redondeado utilizando
     cuatro radios: NE, SE, SW y NW.
     """
 
-    # Ángulos correspondientes al centro de cada cuadrante
     quadrant_angles = np.array([45, 135, 225, 315], dtype=float)
 
-    # Radios: NE, SE, SW, NW
     quadrant_radii = np.array(radii, dtype=float)
 
-    # 360 puntos para crear una curva muy suave
     angles = np.linspace(0, 360, 361)
 
     interpolated_radii = []
 
     for angle in angles[:-1]:
 
-        # Determinar entre qué dos cuadrantes estamos
         if angle >= 315 or angle < 45:
-            r1 = quadrant_radii[3]  # NW
-            r2 = quadrant_radii[0]  # NE
+            r1 = quadrant_radii[3]
+            r2 = quadrant_radii[0]
 
             if angle >= 315:
                 t = (angle - 315) / 90
@@ -177,24 +177,22 @@ def create_wind_field(center_lon, center_lat, radii):
                 t = (angle + 45) / 90
 
         elif angle < 135:
-            r1 = quadrant_radii[0]  # NE
-            r2 = quadrant_radii[1]  # SE
+            r1 = quadrant_radii[0]
+            r2 = quadrant_radii[1]
             t = (angle - 45) / 90
 
         elif angle < 225:
-            r1 = quadrant_radii[1]  # SE
-            r2 = quadrant_radii[2]  # SW
+            r1 = quadrant_radii[1]
+            r2 = quadrant_radii[2]
             t = (angle - 135) / 90
 
         else:
-            r1 = quadrant_radii[2]  # SW
-            r2 = quadrant_radii[3]  # NW
+            r1 = quadrant_radii[2]
+            r2 = quadrant_radii[3]
             t = (angle - 225) / 90
 
-        # Mantener t dentro de 0–1
         t = np.clip(t, 0, 1)
 
-        # Interpolación suave
         smooth_t = (1 - np.cos(np.pi * t)) / 2
 
         radius = (
@@ -206,18 +204,12 @@ def create_wind_field(center_lon, center_lat, radii):
 
     interpolated_radii = np.array(interpolated_radii)
 
-    # --------------------------------------------------
-    # Convertir millas náuticas a grados
-    # --------------------------------------------------
-
     lat_deg = interpolated_radii / 60.0
 
     lon_deg = interpolated_radii / (
         60.0 * np.cos(np.radians(center_lat))
     )
 
-    # Convertir de ángulo meteorológico
-    # a coordenadas X/Y
     math_angles = np.radians(
         90 - angles[:-1]
     )
@@ -228,6 +220,8 @@ def create_wind_field(center_lon, center_lat, radii):
     coordinates = np.column_stack((x, y))
 
     return Polygon(coordinates)
+
+
 forecast_hours = [0, 12, 24, 36, 48, 72]
 nhc_radii_deg = [0.0, 0.45, 0.75, 1.10, 1.45, 2.10]
 
@@ -236,20 +230,22 @@ track_lats = []
 circles = []
 
 rad_heading = np.radians(90 - heading)
+
 for h, r in zip(forecast_hours, nhc_radii_deg):
     dist_nm = forward_speed * h
     dist_deg = dist_nm / 60.0
-    
+
     fx = lon + dist_deg * np.cos(rad_heading)
     fy = lat + dist_deg * np.sin(rad_heading)
-    
+
     track_lons.append(fx)
     track_lats.append(fy)
-    
+
     pt = Point(fx, fy)
     circles.append(pt.buffer(max(r, 0.2)))
 
 cone_geom = unary_union(circles).convex_hull
+
 wind34 = create_wind_field(
     lon,
     lat,
@@ -269,10 +265,6 @@ wind64 = create_wind_field(
 )
 
 
-
-# MAPA INTERACTIVO
-
-from shapely.geometry import mapping
 # MAPA INTERACTIVO
 
 from shapely.geometry import mapping
@@ -389,5 +381,5 @@ with col2:
     **VIENTOS MÁXIMOS:** {wind_speed} nudos (~{int(wind_speed * 1.852)} km/h)  
     **MOVIMIENTO ACTUAL:** Rumbo {heading}° a {forward_speed} kt  
     """)
-    
+
     st.info("Nota didáctica: El cono representa el área probable del centro del ciclón en las próximas 72 horas. Los efectos del viento y lluvia se extienden significativamente fuera de esta zona.")
