@@ -1822,6 +1822,261 @@ with col1:
 
 
                         // =================================================
+                        // BOTÓN FULLSCREEN
+                        // =================================================
+
+                        var fullscreenControl =
+                            L.control({
+                                position: "bottomright"
+                            });
+
+
+                        fullscreenControl.onAdd = function(map) {
+
+                            var container =
+                                L.DomUtil.create(
+                                    "div",
+                                    "leaflet-control"
+                                );
+
+
+                            var button =
+                                L.DomUtil.create(
+                                    "button",
+                                    "",
+                                    container
+                                );
+
+
+                            button.type =
+                                "button";
+
+
+                            button.innerHTML =
+                                "⛶";
+
+
+                            button.title =
+                                "Pantalla completa";
+
+
+                            button.style.backgroundColor =
+                                "white";
+
+                            button.style.color =
+                                "black";
+
+                            button.style.border =
+                                "2px solid #333";
+
+                            button.style.borderRadius =
+                                "6px";
+
+                            button.style.padding =
+                                "6px 10px";
+
+                            button.style.fontSize =
+                                "20px";
+
+                            button.style.fontWeight =
+                                "bold";
+
+                            button.style.cursor =
+                                "pointer";
+
+                            button.style.width =
+                                "45px";
+
+                            button.style.height =
+                                "45px";
+
+
+                            L.DomEvent.disableClickPropagation(
+                                container
+                            );
+
+
+                            var fullscreen =
+                                false;
+
+                            var originalFrameStyle =
+                                null;
+
+
+                            L.DomEvent.on(
+                                button,
+                                "click",
+                                function() {
+
+                                    var frame =
+                                        window.frameElement;
+
+
+                                    if (!frame) {
+
+                                        return;
+
+                                    }
+
+
+                                    if (!fullscreen) {
+
+                                        originalFrameStyle = {
+
+                                            position:
+                                                frame.style.position,
+
+                                            top:
+                                                frame.style.top,
+
+                                            left:
+                                                frame.style.left,
+
+                                            width:
+                                                frame.style.width,
+
+                                            height:
+                                                frame.style.height,
+
+                                            zIndex:
+                                                frame.style.zIndex,
+
+                                            border:
+                                                frame.style.border,
+
+                                            margin:
+                                                frame.style.margin
+
+                                        };
+
+
+                                        frame.style.position =
+                                            "fixed";
+
+                                        frame.style.top =
+                                            "0";
+
+                                        frame.style.left =
+                                            "0";
+
+                                        frame.style.width =
+                                            "100vw";
+
+                                        frame.style.height =
+                                            "100dvh";
+
+                                        frame.style.zIndex =
+                                            "2147483647";
+
+                                        frame.style.border =
+                                            "0";
+
+                                        frame.style.margin =
+                                            "0";
+
+
+                                        fullscreen =
+                                            true;
+
+
+                                        button.innerHTML =
+                                            "✕";
+
+                                        button.title =
+                                            "Salir de pantalla completa";
+
+
+                                        setTimeout(
+                                            function() {
+
+                                                mapAnimation.invalidateSize(
+                                                    true
+                                                );
+
+                                            },
+                                            100
+                                        );
+
+
+                                        setTimeout(
+                                            function() {
+
+                                                mapAnimation.invalidateSize(
+                                                    true
+                                                );
+
+                                            },
+                                            500
+                                        );
+
+                                    }
+
+                                    else {
+
+                                        frame.style.position =
+                                            originalFrameStyle.position;
+
+                                        frame.style.top =
+                                            originalFrameStyle.top;
+
+                                        frame.style.left =
+                                            originalFrameStyle.left;
+
+                                        frame.style.width =
+                                            originalFrameStyle.width;
+
+                                        frame.style.height =
+                                            originalFrameStyle.height;
+
+                                        frame.style.zIndex =
+                                            originalFrameStyle.zIndex;
+
+                                        frame.style.border =
+                                            originalFrameStyle.border;
+
+                                        frame.style.margin =
+                                            originalFrameStyle.margin;
+
+
+                                        fullscreen =
+                                            false;
+
+
+                                        button.innerHTML =
+                                            "⛶";
+
+                                        button.title =
+                                            "Pantalla completa";
+
+
+                                        setTimeout(
+                                            function() {
+
+                                                mapAnimation.invalidateSize(
+                                                    true
+                                                );
+
+                                            },
+                                            100
+                                        );
+
+                                    }
+
+                                }
+                            );
+
+
+                            return container;
+
+                        };
+
+
+                        fullscreenControl.addTo(
+                            mapAnimation
+                        );
+
+
+                        // =================================================
                         // CONVERTIR COORDENADAS GEOJSON → LEAFLET
                         // =================================================
 
@@ -1830,6 +2085,7 @@ with col1:
                         ) {
 
                             var resultado = [];
+
 
                             for (
                                 var i = 0;
@@ -1843,6 +2099,7 @@ with col1:
                                 ]);
 
                             }
+
 
                             return resultado;
 
@@ -1932,7 +2189,7 @@ with col1:
 
 
                             // ---------------------------------------------
-                            // ASEGURAR QUE LOS CAMPOS QUEDEN VISIBLES
+                            // ASEGURAR VISIBILIDAD
                             // ---------------------------------------------
 
                             wind34Layer.bringToFront();
@@ -2018,11 +2275,43 @@ with col1:
         )
 
 
+        # ==================================================
+        # MAPA GRANDE
+        # ==================================================
+
         st_folium(
             mapa_animacion,
             width=None,
-            height=600,
+            height=850,
             key="mapa_animacion_24h"
+        )
+
+
+        # ==================================================
+        # FORZAR EL IFRAME A OCUPAR TODO EL ANCHO
+        # ==================================================
+
+        st.markdown(
+            """
+            <style>
+
+            iframe[title="streamlit_folium.st_folium"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 850px !important;
+                min-height: 850px !important;
+            }
+
+            [data-testid="stIFrame"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 850px !important;
+                min-height: 850px !important;
+            }
+
+            </style>
+            """,
+            unsafe_allow_html=True
         )
 
 
