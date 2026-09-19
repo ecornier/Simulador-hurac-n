@@ -1890,9 +1890,9 @@ with col1:
                                 );
 
 
-                            wind34Layer.setLatLngs(
+                            wind34Layer.setLatLngs([
                                 coords34
-                            );
+                            ]);
 
                             wind34Layer.redraw();
 
@@ -1907,9 +1907,9 @@ with col1:
                                 );
 
 
-                            wind50Layer.setLatLngs(
+                            wind50Layer.setLatLngs([
                                 coords50
-                            );
+                            ]);
 
                             wind50Layer.redraw();
 
@@ -1924,9 +1924,9 @@ with col1:
                                 );
 
 
-                            wind64Layer.setLatLngs(
+                            wind64Layer.setLatLngs([
                                 coords64
-                            );
+                            ]);
 
                             wind64Layer.redraw();
 
