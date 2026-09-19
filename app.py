@@ -2,8 +2,6 @@ import streamlit as st
 from best_tracks import descargar_hurdat, buscar_ciclon
 import numpy as np
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import folium
 from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
@@ -95,40 +93,22 @@ if modo == "Ciclón tropical histórico":
     lon_text = coordenadas[1].strip()
 
     if lat_text.endswith("N"):
-
-        lat = float(
-            lat_text[:-1]
-        )
+        lat = float(lat_text[:-1])
 
     elif lat_text.endswith("S"):
-
-        lat = -float(
-            lat_text[:-1]
-        )
+        lat = -float(lat_text[:-1])
 
     else:
-
-        lat = float(
-            lat_text
-        )
+        lat = float(lat_text)
 
     if lon_text.endswith("W"):
-
-        lon = -float(
-            lon_text[:-1]
-        )
+        lon = -float(lon_text[:-1])
 
     elif lon_text.endswith("E"):
-
-        lon = float(
-            lon_text[:-1]
-        )
+        lon = float(lon_text[:-1])
 
     else:
-
-        lon = float(
-            lon_text
-        )
+        lon = float(lon_text)
 
 
 if modo == "Huracán hipotético":
@@ -179,13 +159,9 @@ forward_speed = st.sidebar.slider(
 
 st.sidebar.markdown("---")
 
-st.sidebar.header(
-    "Wind Radii"
-)
+st.sidebar.header("Wind Radii")
 
-st.sidebar.subheader(
-    "34 kt — Tormenta Tropical"
-)
+st.sidebar.subheader("34 kt — Tormenta Tropical")
 
 r34_ne = st.sidebar.number_input(
     "34 kt — NE",
@@ -220,9 +196,7 @@ r34_nw = st.sidebar.number_input(
 )
 
 
-st.sidebar.subheader(
-    "50 kt"
-)
+st.sidebar.subheader("50 kt")
 
 r50_ne = st.sidebar.number_input(
     "50 kt — NE",
@@ -257,9 +231,7 @@ r50_nw = st.sidebar.number_input(
 )
 
 
-st.sidebar.subheader(
-    "64 kt — Huracán"
-)
+st.sidebar.subheader("64 kt — Huracán")
 
 r64_ne = st.sidebar.number_input(
     "64 kt — NE",
@@ -318,9 +290,7 @@ def get_category(wind):
         return "Huracán Cat 5 (Mayor)"
 
 
-category_str = get_category(
-    wind_speed
-)
+category_str = get_category(wind_speed)
 
 
 def create_wind_field(
@@ -350,43 +320,30 @@ def create_wind_field(
             r2 = quadrant_radii[0]
 
             if angle >= 315:
-
-                t = (
-                    angle - 315
-                ) / 90
-
+                t = (angle - 315) / 90
             else:
-
-                t = (
-                    angle + 45
-                ) / 90
+                t = (angle + 45) / 90
 
         elif angle < 135:
 
             r1 = quadrant_radii[0]
             r2 = quadrant_radii[1]
 
-            t = (
-                angle - 45
-            ) / 90
+            t = (angle - 45) / 90
 
         elif angle < 225:
 
             r1 = quadrant_radii[1]
             r2 = quadrant_radii[2]
 
-            t = (
-                angle - 135
-            ) / 90
+            t = (angle - 135) / 90
 
         else:
 
             r1 = quadrant_radii[2]
             r2 = quadrant_radii[3]
 
-            t = (
-                angle - 225
-            ) / 90
+            t = (angle - 225) / 90
 
         t = np.clip(
             t,
@@ -408,18 +365,13 @@ def create_wind_field(
             r2 * smooth_t
         )
 
-        interpolated_radii.append(
-            radius
-        )
+        interpolated_radii.append(radius)
 
     interpolated_radii = np.array(
         interpolated_radii
     )
 
-    lat_deg = (
-        interpolated_radii
-        / 60.0
-    )
+    lat_deg = interpolated_radii / 60.0
 
     lon_deg = (
         interpolated_radii
@@ -428,9 +380,7 @@ def create_wind_field(
             60.0
             *
             np.cos(
-                np.radians(
-                    center_lat
-                )
+                np.radians(center_lat)
             )
         )
     )
@@ -444,9 +394,7 @@ def create_wind_field(
         +
         lon_deg
         *
-        np.cos(
-            math_angles
-        )
+        np.cos(math_angles)
     )
 
     y = (
@@ -454,18 +402,14 @@ def create_wind_field(
         +
         lat_deg
         *
-        np.sin(
-            math_angles
-        )
+        np.sin(math_angles)
     )
 
     coordinates = np.column_stack(
         (x, y)
     )
 
-    return Polygon(
-        coordinates
-    )
+    return Polygon(coordinates)
 
 
 def calcular_viento_en_punto(
@@ -488,17 +432,9 @@ def calcular_viento_en_punto(
     r64_nw
 ):
 
-    lat_diff = (
-        point_lat
-        -
-        future_lat
-    )
+    lat_diff = point_lat - future_lat
 
-    lon_diff = (
-        point_lon
-        -
-        future_lon
-    )
+    lon_diff = point_lon - future_lon
 
     distance_nm = np.sqrt(
         (lat_diff * 60.0) ** 2
@@ -509,9 +445,7 @@ def calcular_viento_en_punto(
             60.0
             *
             np.cos(
-                np.radians(
-                    future_lat
-                )
+                np.radians(future_lat)
             )
         ) ** 2
     )
@@ -521,9 +455,7 @@ def calcular_viento_en_punto(
             lon_diff
             *
             np.cos(
-                np.radians(
-                    future_lat
-                )
+                np.radians(future_lat)
             ),
             lat_diff
         )
@@ -566,11 +498,7 @@ def calcular_viento_en_punto(
 
     if distance_nm <= r64 and r64 > 0:
 
-        fraction = (
-            distance_nm
-            /
-            r64
-        )
+        fraction = distance_nm / r64
 
         estimated_wind = (
             wind_speed
@@ -585,44 +513,32 @@ def calcular_viento_en_punto(
     elif distance_nm <= r50 and r50 > r64:
 
         fraction = (
-            distance_nm
-            -
-            r64
+            distance_nm - r64
         ) / (
-            r50
-            -
-            r64
+            r50 - r64
         )
 
         estimated_wind = (
             64
             -
             (
-                14
-                *
-                fraction
+                14 * fraction
             )
         )
 
     elif distance_nm <= r34 and r34 > r50:
 
         fraction = (
-            distance_nm
-            -
-            r50
+            distance_nm - r50
         ) / (
-            r34
-            -
-            r50
+            r34 - r50
         )
 
         estimated_wind = (
             50
             -
             (
-                16
-                *
-                fraction
+                16 * fraction
             )
         )
 
@@ -642,9 +558,7 @@ def calcular_viento_en_punto(
                     1
                     -
                     (
-                        distance_nm
-                        -
-                        r34
+                        distance_nm - r34
                     )
                     /
                     50
@@ -750,18 +664,12 @@ for h, r in zip(
 ):
 
     future_lat, future_lon = (
-        obtener_posicion_futura(
-            h
-        )
+        obtener_posicion_futura(h)
     )
 
-    track_lons.append(
-        future_lon
-    )
+    track_lons.append(future_lon)
 
-    track_lats.append(
-        future_lat
-    )
+    track_lats.append(future_lat)
 
     pt = Point(
         future_lon,
@@ -770,10 +678,7 @@ for h, r in zip(
 
     circles.append(
         pt.buffer(
-            max(
-                r,
-                0.2
-            )
+            max(r, 0.2)
         )
     )
 
@@ -798,9 +703,7 @@ m = folium.Map(
 
 
 folium.GeoJson(
-    mapping(
-        cone_geom
-    ),
+    mapping(cone_geom),
     style_function=lambda x: {
         "fillColor": "white",
         "color": "red",
@@ -845,9 +748,7 @@ wind64 = create_wind_field(
 
 
 folium.GeoJson(
-    mapping(
-        wind34
-    ),
+    mapping(wind34),
     style_function=lambda x: {
         "color": "green",
         "weight": 2,
@@ -857,9 +758,7 @@ folium.GeoJson(
 
 
 folium.GeoJson(
-    mapping(
-        wind50
-    ),
+    mapping(wind50),
     style_function=lambda x: {
         "color": "orange",
         "weight": 2,
@@ -869,9 +768,7 @@ folium.GeoJson(
 
 
 folium.GeoJson(
-    mapping(
-        wind64
-    ),
+    mapping(wind64),
     style_function=lambda x: {
         "color": "red",
         "weight": 2,
@@ -908,9 +805,7 @@ for h, tx, ty in zip(
         color="black",
         fill=True,
         fill_opacity=1,
-        popup=(
-            f"Pronóstico: +{h} horas"
-        )
+        popup=f"Pronóstico: +{h} horas"
     ).add_to(m)
 
 
@@ -924,10 +819,7 @@ folium.CircleMarker(
     fill=True,
     fill_color="red",
     fill_opacity=1,
-    popup=(
-        f"{name} — "
-        f"{wind_speed} kt"
-    )
+    popup=f"{name} — {wind_speed} kt"
 ).add_to(m)
 
 
@@ -961,9 +853,7 @@ with col1:
     if (
         map_data
         and
-        map_data.get(
-            "last_clicked"
-        )
+        map_data.get("last_clicked")
     ):
 
         clicked_lat = (
@@ -1027,12 +917,9 @@ with col1:
         )
 
 
-        estimated_category = (
-            get_category(
-                estimated_wind
-            )
+        estimated_category = get_category(
+            estimated_wind
         )
-
 
         estimated_mph = (
             estimated_wind
@@ -1044,19 +931,13 @@ with col1:
         angle = np.degrees(
             np.arctan2(
                 (
-                    clicked_lon
-                    -
-                    lon
+                    clicked_lon - lon
                 )
                 *
                 np.cos(
-                    np.radians(
-                        lat
-                    )
+                    np.radians(lat)
                 ),
-                clicked_lat
-                -
-                lat
+                clicked_lat - lat
             )
         )
 
@@ -1101,11 +982,7 @@ with col1:
         # ==================================================
 
         progression_hours = list(
-            range(
-                0,
-                73,
-                1
-            )
+            range(0, 73, 1)
         )
 
         progression_wind_kt = []
@@ -1150,9 +1027,7 @@ with col1:
             )
 
             progression_wind_mph.append(
-                future_wind
-                *
-                1.15078
+                future_wind * 1.15078
             )
 
             progression_distance.append(
@@ -1278,13 +1153,9 @@ with col1:
             ):
 
                 if viento >= umbral:
-
-                    horas_dentro.append(
-                        h
-                    )
+                    horas_dentro.append(h)
 
             if not horas_dentro:
-
                 return None, None
 
             return (
@@ -1376,10 +1247,7 @@ with col1:
         animation_frames = []
 
 
-        for future_h in range(
-            0,
-            25
-        ):
+        for future_h in range(0, 25):
 
             future_lat, future_lon = (
                 obtener_posicion_futura(
@@ -1395,17 +1263,14 @@ with col1:
                     future_lat,
                     future_lon,
                     wind_speed,
-
                     r34_ne,
                     r34_se,
                     r34_sw,
                     r34_nw,
-
                     r50_ne,
                     r50_se,
                     r50_sw,
                     r50_nw,
-
                     r64_ne,
                     r64_se,
                     r64_sw,
@@ -1414,17 +1279,12 @@ with col1:
             )
 
 
-            future_category = (
-                get_category(
-                    future_wind
-                )
+            future_category = get_category(
+                future_wind
             )
 
-
             future_wind_mph = (
-                future_wind
-                *
-                1.15078
+                future_wind * 1.15078
             )
 
 
@@ -1491,10 +1351,6 @@ with col1:
         # MAPA DE ANIMACIÓN
         # ==================================================
 
-        # CAMBIO PRINCIPAL:
-        # Ya no usamos fit_bounds() aquí.
-        # El mapa conserva una vista amplia y estable.
-
         mapa_animacion = folium.Map(
             location=[
                 lat,
@@ -1509,9 +1365,7 @@ with col1:
 
 
         folium.GeoJson(
-            mapping(
-                cone_geom
-            ),
+            mapping(cone_geom),
             style_function=lambda x: {
                 "fillColor": "white",
                 "color": "red",
@@ -1553,9 +1407,7 @@ with col1:
                 color="black",
                 fill=True,
                 fill_opacity=1,
-                popup=(
-                    f"Pronóstico: +{h} horas"
-                )
+                popup=f"Pronóstico: +{h} horas"
             ).add_to(
                 mapa_animacion
             )
@@ -1618,10 +1470,7 @@ with col1:
             fill=True,
             fill_color="red",
             fill_opacity=1,
-            popup=(
-                f"{name} — "
-                f"{wind_speed} kt"
-            )
+            popup=f"{name} — {wind_speed} kt"
         ).add_to(
             mapa_animacion
         )
@@ -1653,13 +1502,9 @@ with col1:
         # ==================================================
 
         map_name = mapa_animacion.get_name()
-
         wind34_name = wind34_layer.get_name()
-
         wind50_name = wind50_layer.get_name()
-
         wind64_name = wind64_layer.get_name()
-
         center_marker_name = center_marker.get_name()
 
         frames_json = json.dumps(
@@ -1718,6 +1563,10 @@ with col1:
 
                         var animationTimer = null;
 
+                        var mapIsFullscreen = false;
+
+                        var originalFrameStyle = null;
+
 
                         // =================================================
                         // INFORMACIÓN
@@ -1736,16 +1585,14 @@ with col1:
                                     "animation-info-control"
                                 );
 
-
                             div.id =
                                 "animation-info";
-
 
                             div.style.background =
                                 "white";
 
                             div.style.padding =
-                                "12px 15px";
+                                "10px 12px";
 
                             div.style.borderRadius =
                                 "8px";
@@ -1757,24 +1604,24 @@ with col1:
                                 "Arial, sans-serif";
 
                             div.style.fontSize =
-                                "14px";
+                                "13px";
 
                             div.style.lineHeight =
-                                "1.5";
+                                "1.45";
 
                             div.style.minWidth =
-                                "230px";
+                                "210px";
 
+                            div.style.maxWidth =
+                                "250px";
 
                             div.innerHTML =
                                 "<b>🎬 Simulación 24 horas</b><br>" +
                                 "⏱️ <b>+0 horas</b>";
 
-
                             L.DomEvent.disableClickPropagation(
                                 div
                             );
-
 
                             return div;
 
@@ -1804,7 +1651,6 @@ with col1:
                                     "leaflet-control"
                                 );
 
-
                             container.style.marginTop =
                                 "10px";
 
@@ -1820,23 +1666,14 @@ with col1:
                             button.type =
                                 "button";
 
-
                             button.innerHTML =
                                 "▶️ Play 24h";
-
 
                             button.title =
                                 "Iniciar simulación de 24 horas";
 
-
                             button.style.display =
                                 "block";
-
-                            button.style.visibility =
-                                "visible";
-
-                            button.style.opacity =
-                                "1";
 
                             button.style.backgroundColor =
                                 "white";
@@ -1866,10 +1703,10 @@ with col1:
                                 "nowrap";
 
                             button.style.height =
-                                "40px";
+                                "42px";
 
                             button.style.minWidth =
-                                "110px";
+                                "115px";
 
                             button.style.boxSizing =
                                 "border-box";
@@ -1939,10 +1776,8 @@ with col1:
                                                     animationTimer =
                                                         null;
 
-
                                                     frameIndex =
                                                         frames.length - 1;
-
 
                                                     button.innerHTML =
                                                         "🔄 Reiniciar";
@@ -1985,6 +1820,335 @@ with col1:
                         playControl.addTo(
                             mapAnimation
                         );
+
+
+                        // =================================================
+                        // BOTÓN PANTALLA COMPLETA
+                        // =================================================
+
+                        var fullscreenControl =
+                            L.control({
+                                position: "bottomright"
+                            });
+
+
+                        fullscreenControl.onAdd = function(map) {
+
+                            var container =
+                                L.DomUtil.create(
+                                    "div",
+                                    "leaflet-control"
+                                );
+
+
+                            var button =
+                                L.DomUtil.create(
+                                    "button",
+                                    "",
+                                    container
+                                );
+
+
+                            button.type =
+                                "button";
+
+                            button.innerHTML =
+                                "⛶";
+
+                            button.title =
+                                "Expandir mapa";
+
+                            button.setAttribute(
+                                "aria-label",
+                                "Expandir mapa"
+                            );
+
+
+                            button.style.background =
+                                "white";
+
+                            button.style.color =
+                                "black";
+
+                            button.style.border =
+                                "2px solid #333";
+
+                            button.style.borderRadius =
+                                "6px";
+
+                            button.style.width =
+                                "44px";
+
+                            button.style.height =
+                                "44px";
+
+                            button.style.fontSize =
+                                "24px";
+
+                            button.style.fontWeight =
+                                "bold";
+
+                            button.style.cursor =
+                                "pointer";
+
+                            button.style.display =
+                                "flex";
+
+                            button.style.alignItems =
+                                "center";
+
+                            button.style.justifyContent =
+                                "center";
+
+                            button.style.boxSizing =
+                                "border-box";
+
+
+                            L.DomEvent.disableClickPropagation(
+                                container
+                            );
+
+
+                            L.DomEvent.on(
+                                button,
+                                "click",
+                                function() {
+
+                                    toggleMapFullscreen(
+                                        button
+                                    );
+
+                                }
+                            );
+
+
+                            return container;
+
+                        };
+
+
+                        fullscreenControl.addTo(
+                            mapAnimation
+                        );
+
+
+                        // =================================================
+                        // FULLSCREEN REAL DEL IFRAME
+                        // =================================================
+
+                        function toggleMapFullscreen(
+                            button
+                        ) {
+
+                            var frame =
+                                window.frameElement;
+
+
+                            if (
+                                !mapIsFullscreen
+                            ) {
+
+                                if (frame) {
+
+                                    originalFrameStyle = {
+                                        position:
+                                            frame.style.position,
+
+                                        top:
+                                            frame.style.top,
+
+                                        left:
+                                            frame.style.left,
+
+                                        right:
+                                            frame.style.right,
+
+                                        bottom:
+                                            frame.style.bottom,
+
+                                        width:
+                                            frame.style.width,
+
+                                        height:
+                                            frame.style.height,
+
+                                        zIndex:
+                                            frame.style.zIndex,
+
+                                        border:
+                                            frame.style.border,
+
+                                        margin:
+                                            frame.style.margin
+                                    };
+
+
+                                    frame.style.setProperty(
+                                        "position",
+                                        "fixed",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "top",
+                                        "0",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "left",
+                                        "0",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "width",
+                                        "100vw",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "height",
+                                        "100dvh",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "min-height",
+                                        "100dvh",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "z-index",
+                                        "2147483647",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "border",
+                                        "0",
+                                        "important"
+                                    );
+
+                                    frame.style.setProperty(
+                                        "margin",
+                                        "0",
+                                        "important"
+                                    );
+
+
+                                    mapIsFullscreen =
+                                        true;
+
+
+                                    button.innerHTML =
+                                        "✕";
+
+
+                                    button.title =
+                                        "Salir de pantalla completa";
+
+
+                                    document.body.style.overflow =
+                                        "hidden";
+
+
+                                    setTimeout(
+                                        function() {
+
+                                            mapAnimation.invalidateSize(
+                                                true
+                                            );
+
+                                        },
+                                        100
+                                    );
+
+
+                                    setTimeout(
+                                        function() {
+
+                                            mapAnimation.invalidateSize(
+                                                true
+                                            );
+
+                                        },
+                                        500
+                                    );
+
+                                }
+
+                            } else {
+
+                                if (
+                                    frame &&
+                                    originalFrameStyle
+                                ) {
+
+                                    frame.style.position =
+                                        originalFrameStyle.position;
+
+                                    frame.style.top =
+                                        originalFrameStyle.top;
+
+                                    frame.style.left =
+                                        originalFrameStyle.left;
+
+                                    frame.style.right =
+                                        originalFrameStyle.right;
+
+                                    frame.style.bottom =
+                                        originalFrameStyle.bottom;
+
+                                    frame.style.width =
+                                        originalFrameStyle.width;
+
+                                    frame.style.height =
+                                        originalFrameStyle.height;
+
+                                    frame.style.zIndex =
+                                        originalFrameStyle.zIndex;
+
+                                    frame.style.border =
+                                        originalFrameStyle.border;
+
+                                    frame.style.margin =
+                                        originalFrameStyle.margin;
+
+                                }
+
+
+                                mapIsFullscreen =
+                                    false;
+
+
+                                button.innerHTML =
+                                    "⛶";
+
+
+                                button.title =
+                                    "Expandir mapa";
+
+
+                                document.body.style.overflow =
+                                    "";
+
+
+                                setTimeout(
+                                    function() {
+
+                                        mapAnimation.invalidateSize(
+                                            true
+                                        );
+
+                                    },
+                                    100
+                                );
+
+                            }
+
+                        }
 
 
                         // =================================================
@@ -2094,10 +2258,7 @@ with col1:
                         }
 
 
-                        renderFrame(
-                            0
-                        );
-
+                        renderFrame(0);
 
                     })();
 
@@ -2121,6 +2282,34 @@ with col1:
         )
 
 
+        # ==================================================
+        # MAPA GRANDE EN STREAMLIT
+        # ==================================================
+
+        st.markdown(
+            """
+            <style>
+
+            iframe[title="streamlit_folium.st_folium"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 850px !important;
+                min-height: 850px !important;
+            }
+
+            [data-testid="stIFrame"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 850px !important;
+                min-height: 850px !important;
+            }
+
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+
         st.caption(
             "Cada 0.5 segundos representa 1 hora de simulación. "
             "El punto azul permanece fijo."
@@ -2130,7 +2319,7 @@ with col1:
         st_folium(
             mapa_animacion,
             width=None,
-            height=600,
+            height=850,
             key="mapa_animacion_24h"
         )
 
