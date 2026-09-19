@@ -27,6 +27,21 @@ modo = st.sidebar.radio(
 )
 
 name = st.sidebar.text_input("Nombre de la Tormenta", value="ALBERTO")
+if modo == "Ciclón tropical histórico":
+    ciclón = st.sidebar.selectbox(
+        "Ciclón histórico",
+        [
+            "Irma (2017)",
+            "María (2017)",
+            "Fiona (2022)",
+            "Lenny (1999)",
+            "Jeanne (2004)",
+            "Irene (2011)",
+            "Erin (2007)",
+            "Ernesto (2024)"
+        ]
+    )
+
 lat = lat = st.sidebar.number_input(
     "Latitud Inicial (°N)",
     min_value=10.0,
