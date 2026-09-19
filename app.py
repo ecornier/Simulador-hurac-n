@@ -2138,7 +2138,7 @@ with col1:
 
 
                             // ---------------------------------------------
-                            // CAMPO 34 KT
+                            // COORDENADAS DE LOS CAMPOS
                             // ---------------------------------------------
 
                             var coords34 =
@@ -2147,29 +2147,11 @@ with col1:
                                 );
 
 
-                            wind34Layer.setLatLngs(
-                                coords34
-                            );
-
-
-                            // ---------------------------------------------
-                            // CAMPO 50 KT
-                            // ---------------------------------------------
-
                             var coords50 =
                                 convertirCoordenadas(
                                     frame.wind50.geometry.coordinates[0]
                                 );
 
-
-                            wind50Layer.setLatLngs(
-                                coords50
-                            );
-
-
-                            // ---------------------------------------------
-                            // CAMPO 64 KT
-                            // ---------------------------------------------
 
                             var coords64 =
                                 convertirCoordenadas(
@@ -2177,20 +2159,94 @@ with col1:
                                 );
 
 
-                            wind64Layer.setLatLngs(
-                                coords64
-                            );
+                            // =================================================
+                            // MOVER CAMPO 34 KT
+                            // =================================================
+
+                            if (
+                                mapAnimation.hasLayer(
+                                    wind34Layer
+                                )
+                            ) {
+
+                                mapAnimation.removeLayer(
+                                    wind34Layer
+                                );
+
+                            }
 
 
-                            // ---------------------------------------------
-                            // ACTUALIZAR EL MAPA
-                            // ---------------------------------------------
+                            wind34Layer =
+                                L.polygon(
+                                    coords34,
+                                    {
+                                        color: "green",
+                                        weight: 3,
+                                        fill: false
+                                    }
+                                ).addTo(
+                                    mapAnimation
+                                );
 
-                            wind34Layer.redraw();
 
-                            wind50Layer.redraw();
+                            // =================================================
+                            // MOVER CAMPO 50 KT
+                            // =================================================
 
-                            wind64Layer.redraw();
+                            if (
+                                mapAnimation.hasLayer(
+                                    wind50Layer
+                                )
+                            ) {
+
+                                mapAnimation.removeLayer(
+                                    wind50Layer
+                                );
+
+                            }
+
+
+                            wind50Layer =
+                                L.polygon(
+                                    coords50,
+                                    {
+                                        color: "orange",
+                                        weight: 3,
+                                        fill: false
+                                    }
+                                ).addTo(
+                                    mapAnimation
+                                );
+
+
+                            // =================================================
+                            // MOVER CAMPO 64 KT
+                            // =================================================
+
+                            if (
+                                mapAnimation.hasLayer(
+                                    wind64Layer
+                                )
+                            ) {
+
+                                mapAnimation.removeLayer(
+                                    wind64Layer
+                                );
+
+                            }
+
+
+                            wind64Layer =
+                                L.polygon(
+                                    coords64,
+                                    {
+                                        color: "red",
+                                        weight: 3,
+                                        fill: false
+                                    }
+                                ).addTo(
+                                    mapAnimation
+                                );
 
 
                             // ---------------------------------------------
