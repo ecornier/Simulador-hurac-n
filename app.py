@@ -1338,13 +1338,17 @@ with col1:
                     future_lat,
                     future_lon,
                     wind_speed,
+
                     r34_ne,
+                    r34_se,
                     r34_sw,
                     r34_nw,
+
                     r50_ne,
                     r50_se,
                     r50_sw,
                     r50_nw,
+
                     r64_ne,
                     r64_se,
                     r64_sw,
