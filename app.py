@@ -73,23 +73,24 @@ if modo == "Ciclón tropical histórico":
         lat = float(coordenadas[0].strip().replace("N", "").replace("S", "-"))
         lon = float(coordenadas[1].strip().replace("W", "").replace("E", "-"))
         
-lat = lat = st.sidebar.number_input(
-    "Latitud Inicial (°N)",
-    min_value=10.0,
-    max_value=35.0,
-    value=20.0,
-    step=0.0001,
-    format="%.4f"
-)
+if modo == "Huracán hipotético":
+    lat = st.sidebar.number_input(
+        "Latitud Inicial (°N)",
+        min_value=10.0,
+        max_value=35.0,
+        value=20.0,
+        step=0.0001,
+        format="%.4f"
+    )
 
-lon = st.sidebar.number_input(
-    "Longitud Inicial (°W)",
-    min_value=-98.0,
-    max_value=-40.0,
-    value=-70.0,
-    step=0.0001,
-    format="%.4f"
-)
+    lon = st.sidebar.number_input(
+        "Longitud Inicial (°W)",
+        min_value=-98.0,
+        max_value=-40.0,
+        value=-70.0,
+        step=0.0001,
+        format="%.4f"
+    )
 wind_speed = st.sidebar.slider("Vientos Sostenidos (nudos)", min_value=30, max_value=165, value=75, step=5)
 heading = st.sidebar.slider("Rumbo (°)", min_value=0, max_value=360, value=290, step=5)
 forward_speed = st.sidebar.slider("Velocidad de Avance (kt)", min_value=5, max_value=25, value=12, step=1)
