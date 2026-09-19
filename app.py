@@ -43,15 +43,30 @@ if modo == "Ciclón tropical histórico":
     )
     
 
-if modo == "Ciclón tropical histórico":
+ if modo == "Ciclón tropical histórico":
     datos_hurdat = descargar_hurdat()
     datos_ciclon = buscar_ciclon(datos_hurdat, ciclón.split(" (")[0])
 
     posiciones = datos_ciclon[1:]
 
+    opciones_posicion = []
+
+    for linea in posiciones:
+        partes = linea.split(",")
+
+        if len(partes) >= 7:
+            fecha = partes[0].strip()
+            hora = partes[1].strip()
+            lat_hurdat = partes[4].strip()
+            lon_hurdat = partes[5].strip()
+
+            opciones_posicion.append(
+                f"{fecha} {hora} UTC — {lat_hurdat}, {lon_hurdat}"
+            )
+
     posicion = st.sidebar.selectbox(
         "Posición histórica",
-        posiciones
+        opciones_posicion
     )
 lat = lat = st.sidebar.number_input(
     "Latitud Inicial (°N)",
