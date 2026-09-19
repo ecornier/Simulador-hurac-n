@@ -10,21 +10,28 @@ from shapely.ops import unary_union
 from streamlit_folium import st_folium
 import json
 from branca.element import Element
+
 st.set_page_config(
     page_title="Simulador de Huracanes NHC",
     layout="wide"
 )
+
 st.title("🌀 Simulador Académico de Huracanes (Estilo NHC)")
+
 st.sidebar.header("Parámetros del Ciclón")
+
 modo = st.sidebar.radio(
     "Modo de simulación",
     ["Huracán hipotético", "Ciclón tropical histórico"]
 )
+
 name = st.sidebar.text_input(
     "Nombre de la Tormenta",
     value="ALBERTO"
 )
+
 if modo == "Ciclón tropical histórico":
+
     ciclón = st.sidebar.selectbox(
         "Ciclón histórico",
         [
@@ -38,62 +45,93 @@ if modo == "Ciclón tropical histórico":
             "Ernesto (2024)"
         ]
     )
+
+
 if modo == "Ciclón tropical histórico":
+
     datos_hurdat = descargar_hurdat()
+
     datos_ciclon = buscar_ciclon(
         datos_hurdat,
         ciclón.split(" (")[0]
     )
+
     posiciones = datos_ciclon[1:]
+
     opciones_posicion = []
+
     for linea in posiciones:
+
         partes = linea.split(",")
+
         if len(partes) >= 7:
+
             fecha = partes[0].strip()
             hora = partes[1].strip()
+
             lat_hurdat = partes[4].strip()
             lon_hurdat = partes[5].strip()
+
             opciones_posicion.append(
                 f"{fecha} {hora} UTC — "
                 f"{lat_hurdat}, {lon_hurdat}"
             )
+
     posicion = st.sidebar.selectbox(
         "Posición histórica",
         opciones_posicion
     )
+
     partes_posicion = posicion.split("—")
+
     coordenadas = (
         partes_posicion[1]
         .strip()
         .split(",")
     )
+
     lat_text = coordenadas[0].strip()
     lon_text = coordenadas[1].strip()
+
     if lat_text.endswith("N"):
+
         lat = float(
             lat_text[:-1]
         )
+
     elif lat_text.endswith("S"):
+
         lat = -float(
             lat_text[:-1]
         )
+
     else:
+
         lat = float(
             lat_text
         )
+
     if lon_text.endswith("W"):
+
         lon = -float(
             lon_text[:-1]
         )
+
     elif lon_text.endswith("E"):
+
         lon = float(
             lon_text[:-1]
         )
+
     else:
+
         lon = float(
             lon_text
         )
+
+
 if modo == "Huracán hipotético":
+
     lat = st.sidebar.number_input(
         "Latitud Inicial (°N)",
         min_value=10.0,
@@ -102,6 +140,7 @@ if modo == "Huracán hipotético":
         step=0.0001,
         format="%.4f"
     )
+
     lon = st.sidebar.number_input(
         "Longitud Inicial (°W)",
         min_value=-98.0,
@@ -110,6 +149,8 @@ if modo == "Huracán hipotético":
         step=0.0001,
         format="%.4f"
     )
+
+
 wind_speed = st.sidebar.slider(
     "Vientos Sostenidos (nudos)",
     min_value=30,
@@ -117,6 +158,8 @@ wind_speed = st.sidebar.slider(
     value=75,
     step=5
 )
+
+
 heading = st.sidebar.slider(
     "Rumbo (°)",
     min_value=0,
@@ -124,6 +167,8 @@ heading = st.sidebar.slider(
     value=290,
     step=5
 )
+
+
 forward_speed = st.sidebar.slider(
     "Velocidad de Avance (kt)",
     min_value=5,
@@ -131,13 +176,20 @@ forward_speed = st.sidebar.slider(
     value=12,
     step=1
 )
+
+
 st.sidebar.markdown("---")
+
 st.sidebar.header(
     "Wind Radii"
 )
+
+
 st.sidebar.subheader(
     "34 kt — Tormenta Tropical"
 )
+
+
 r34_ne = st.sidebar.number_input(
     "34 kt — NE",
     min_value=0.0,
@@ -145,6 +197,7 @@ r34_ne = st.sidebar.number_input(
     value=120.0,
     step=5.0
 )
+
 r34_se = st.sidebar.number_input(
     "34 kt — SE",
     min_value=0.0,
@@ -152,6 +205,7 @@ r34_se = st.sidebar.number_input(
     value=100.0,
     step=5.0
 )
+
 r34_sw = st.sidebar.number_input(
     "34 kt — SW",
     min_value=0.0,
@@ -159,6 +213,7 @@ r34_sw = st.sidebar.number_input(
     value=80.0,
     step=5.0
 )
+
 r34_nw = st.sidebar.number_input(
     "34 kt — NW",
     min_value=0.0,
@@ -166,9 +221,13 @@ r34_nw = st.sidebar.number_input(
     value=100.0,
     step=5.0
 )
+
+
 st.sidebar.subheader(
     "50 kt"
 )
+
+
 r50_ne = st.sidebar.number_input(
     "50 kt — NE",
     min_value=0.0,
@@ -176,6 +235,7 @@ r50_ne = st.sidebar.number_input(
     value=70.0,
     step=5.0
 )
+
 r50_se = st.sidebar.number_input(
     "50 kt — SE",
     min_value=0.0,
@@ -183,6 +243,7 @@ r50_se = st.sidebar.number_input(
     value=60.0,
     step=5.0
 )
+
 r50_sw = st.sidebar.number_input(
     "50 kt — SW",
     min_value=0.0,
@@ -190,6 +251,7 @@ r50_sw = st.sidebar.number_input(
     value=45.0,
     step=5.0
 )
+
 r50_nw = st.sidebar.number_input(
     "50 kt — NW",
     min_value=0.0,
@@ -197,9 +259,13 @@ r50_nw = st.sidebar.number_input(
     value=60.0,
     step=5.0
 )
+
+
 st.sidebar.subheader(
     "64 kt — Huracán"
 )
+
+
 r64_ne = st.sidebar.number_input(
     "64 kt — NE",
     min_value=0.0,
@@ -207,6 +273,7 @@ r64_ne = st.sidebar.number_input(
     value=35.0,
     step=5.0
 )
+
 r64_se = st.sidebar.number_input(
     "64 kt — SE",
     min_value=0.0,
@@ -214,6 +281,7 @@ r64_se = st.sidebar.number_input(
     value=30.0,
     step=5.0
 )
+
 r64_sw = st.sidebar.number_input(
     "64 kt — SW",
     min_value=0.0,
@@ -221,6 +289,7 @@ r64_sw = st.sidebar.number_input(
     value=20.0,
     step=5.0
 )
+
 r64_nw = st.sidebar.number_input(
     "64 kt — NW",
     min_value=0.0,
@@ -228,95 +297,141 @@ r64_nw = st.sidebar.number_input(
     value=30.0,
     step=5.0
 )
+
+
 def get_category(wind):
+
     if wind < 34:
+
         return "Depresión Tropical"
+
     elif wind < 64:
+
         return "Tormenta Tropical"
+
     elif wind < 83:
+
         return "Huracán Cat 1"
+
     elif wind < 96:
+
         return "Huracán Cat 2"
+
     elif wind < 113:
+
         return "Huracán Cat 3 (Mayor)"
+
     elif wind < 137:
+
         return "Huracán Cat 4 (Mayor)"
+
     else:
+
         return "Huracán Cat 5 (Mayor)"
+
+
 category_str = get_category(
     wind_speed
 )
+
+
 def create_wind_field(
     center_lon,
     center_lat,
     radii
 ):
+
     quadrant_radii = np.array(
         radii,
         dtype=float
     )
+
     angles = np.linspace(
         0,
         360,
         361
     )
+
     interpolated_radii = []
+
     for angle in angles[:-1]:
+
         if angle >= 315 or angle < 45:
+
             r1 = quadrant_radii[3]
             r2 = quadrant_radii[0]
+
             if angle >= 315:
+
                 t = (
                     angle - 315
                 ) / 90
+
             else:
+
                 t = (
                     angle + 45
                 ) / 90
+
         elif angle < 135:
+
             r1 = quadrant_radii[0]
             r2 = quadrant_radii[1]
+
             t = (
                 angle - 45
             ) / 90
+
         elif angle < 225:
+
             r1 = quadrant_radii[1]
             r2 = quadrant_radii[2]
+
             t = (
                 angle - 135
             ) / 90
+
         else:
+
             r1 = quadrant_radii[2]
             r2 = quadrant_radii[3]
+
             t = (
                 angle - 225
             ) / 90
+
         t = np.clip(
             t,
             0,
             1
         )
+
         smooth_t = (
             1
             - np.cos(
                 np.pi * t
             )
         ) / 2
+
         radius = (
             r1 * (1 - smooth_t)
             +
             r2 * smooth_t
         )
+
         interpolated_radii.append(
             radius
         )
+
     interpolated_radii = np.array(
         interpolated_radii
     )
+
     lat_deg = (
         interpolated_radii
         / 60.0
     )
+
     lon_deg = (
         interpolated_radii
         /
@@ -330,9 +445,11 @@ def create_wind_field(
             )
         )
     )
+
     math_angles = np.radians(
         90 - angles[:-1]
     )
+
     x = (
         center_lon
         +
@@ -342,6 +459,7 @@ def create_wind_field(
             math_angles
         )
     )
+
     y = (
         center_lat
         +
@@ -351,12 +469,16 @@ def create_wind_field(
             math_angles
         )
     )
+
     coordinates = np.column_stack(
         (x, y)
     )
+
     return Polygon(
         coordinates
     )
+
+
 def calcular_viento_en_punto(
     point_lat,
     point_lon,
@@ -376,16 +498,19 @@ def calcular_viento_en_punto(
     r64_sw,
     r64_nw
 ):
+
     lat_diff = (
         point_lat
         -
         future_lat
     )
+
     lon_diff = (
         point_lon
         -
         future_lon
     )
+
     distance_nm = np.sqrt(
         (lat_diff * 60.0) ** 2
         +
@@ -401,6 +526,7 @@ def calcular_viento_en_punto(
             )
         ) ** 2
     )
+
     angle = np.degrees(
         np.arctan2(
             lon_diff
@@ -413,34 +539,53 @@ def calcular_viento_en_punto(
             lat_diff
         )
     )
+
     if angle < 0:
+
         angle += 360
+
+
     if 0 <= angle < 90:
+
         quadrant = "NE"
+
         r34 = r34_ne
         r50 = r50_ne
         r64 = r64_ne
+
     elif 90 <= angle < 180:
+
         quadrant = "SE"
+
         r34 = r34_se
         r50 = r50_se
         r64 = r64_se
+
     elif 180 <= angle < 270:
+
         quadrant = "SW"
+
         r34 = r34_sw
         r50 = r50_sw
         r64 = r64_sw
+
     else:
+
         quadrant = "NW"
+
         r34 = r34_nw
         r50 = r50_nw
         r64 = r64_nw
+
+
     if distance_nm <= r64 and r64 > 0:
+
         fraction = (
             distance_nm
             /
             r64
         )
+
         estimated_wind = (
             wind_speed
             -
@@ -450,7 +595,9 @@ def calcular_viento_en_punto(
                 fraction
             )
         )
+
     elif distance_nm <= r50 and r50 > r64:
+
         fraction = (
             distance_nm
             -
@@ -460,6 +607,7 @@ def calcular_viento_en_punto(
             -
             r64
         )
+
         estimated_wind = (
             64
             -
@@ -469,7 +617,9 @@ def calcular_viento_en_punto(
                 fraction
             )
         )
+
     elif distance_nm <= r34 and r34 > r50:
+
         fraction = (
             distance_nm
             -
@@ -479,6 +629,7 @@ def calcular_viento_en_punto(
             -
             r50
         )
+
         estimated_wind = (
             50
             -
@@ -488,10 +639,15 @@ def calcular_viento_en_punto(
                 fraction
             )
         )
+
     elif distance_nm <= r34 and r34 > 0:
+
         estimated_wind = 34
+
     else:
+
         if r34 > 0:
+
             estimated_wind = (
                 34
                 *
@@ -508,8 +664,12 @@ def calcular_viento_en_punto(
                     50
                 )
             )
+
         else:
+
             estimated_wind = 0
+
+
     estimated_wind = max(
         0,
         min(
@@ -517,30 +677,39 @@ def calcular_viento_en_punto(
             estimated_wind
         )
     )
+
     return (
         estimated_wind,
         distance_nm,
         quadrant
     )
+
+
 # ==========================================================
 # TRAYECTORIA
 # ==========================================================
+
 rad_heading = np.radians(
     90 - heading
 )
+
+
 def obtener_posicion_futura(
     future_h
 ):
+
     dist_nm = (
         forward_speed
         *
         future_h
     )
+
     dist_deg = (
         dist_nm
         /
         60.0
     )
+
     future_lon = (
         lon
         +
@@ -550,6 +719,7 @@ def obtener_posicion_futura(
             rad_heading
         )
     )
+
     future_lat = (
         lat
         +
@@ -559,10 +729,13 @@ def obtener_posicion_futura(
             rad_heading
         )
     )
+
     return (
         future_lat,
         future_lon
     )
+
+
 forecast_hours = [
     0,
     12,
@@ -571,6 +744,7 @@ forecast_hours = [
     48,
     72
 ]
+
 nhc_radii_deg = [
     0.0,
     0.45,
@@ -579,28 +753,37 @@ nhc_radii_deg = [
     1.45,
     2.10
 ]
+
+
 track_lons = []
 track_lats = []
 circles = []
+
+
 for h, r in zip(
     forecast_hours,
     nhc_radii_deg
 ):
+
     future_lat, future_lon = (
         obtener_posicion_futura(
             h
         )
     )
+
     track_lons.append(
         future_lon
     )
+
     track_lats.append(
         future_lat
     )
+
     pt = Point(
         future_lon,
         future_lat
     )
+
     circles.append(
         pt.buffer(
             max(
@@ -609,12 +792,17 @@ for h, r in zip(
             )
         )
     )
+
+
 cone_geom = unary_union(
     circles
 ).convex_hull
+
+
 # ==========================================================
 # MAPA PRINCIPAL
 # ==========================================================
+
 m = folium.Map(
     location=[
         lat,
@@ -623,6 +811,8 @@ m = folium.Map(
     zoom_start=5,
     tiles="OpenStreetMap"
 )
+
+
 folium.GeoJson(
     mapping(
         cone_geom
@@ -634,6 +824,8 @@ folium.GeoJson(
         "fillOpacity": 0.35
     }
 ).add_to(m)
+
+
 wind34 = create_wind_field(
     lon,
     lat,
@@ -644,6 +836,7 @@ wind34 = create_wind_field(
         r34_nw
     ]
 )
+
 wind50 = create_wind_field(
     lon,
     lat,
@@ -654,6 +847,7 @@ wind50 = create_wind_field(
         r50_nw
     ]
 )
+
 wind64 = create_wind_field(
     lon,
     lat,
@@ -664,6 +858,8 @@ wind64 = create_wind_field(
         r64_nw
     ]
 )
+
+
 folium.GeoJson(
     mapping(
         wind34
@@ -674,6 +870,8 @@ folium.GeoJson(
         "fillOpacity": 0
     }
 ).add_to(m)
+
+
 folium.GeoJson(
     mapping(
         wind50
@@ -684,6 +882,8 @@ folium.GeoJson(
         "fillOpacity": 0
     }
 ).add_to(m)
+
+
 folium.GeoJson(
     mapping(
         wind64
@@ -694,6 +894,8 @@ folium.GeoJson(
         "fillOpacity": 0
     }
 ).add_to(m)
+
+
 folium.PolyLine(
     locations=list(
         zip(
@@ -705,11 +907,14 @@ folium.PolyLine(
     weight=2,
     dash_array="8, 8"
 ).add_to(m)
+
+
 for h, tx, ty in zip(
     forecast_hours,
     track_lons,
     track_lats
 ):
+
     folium.CircleMarker(
         location=[
             ty,
@@ -723,6 +928,8 @@ for h, tx, ty in zip(
             f"Pronóstico: +{h} horas"
         )
     ).add_to(m)
+
+
 folium.CircleMarker(
     location=[
         lat,
@@ -738,6 +945,8 @@ folium.CircleMarker(
         f"{wind_speed} kt"
     )
 ).add_to(m)
+
+
 m.fit_bounds([
     [
         min(track_lats) - 6,
@@ -748,16 +957,23 @@ m.fit_bounds([
         max(track_lons) + 6
     ]
 ])
+
+
 col1, col2 = st.columns(
     [2, 1]
 )
+
+
 with col1:
+
     map_data = st_folium(
         m,
         width=None,
         height=600,
         key="mapa_principal"
     )
+
+
     if (
         map_data
         and
@@ -765,34 +981,45 @@ with col1:
             "last_clicked"
         )
     ):
+
         clicked_lat = (
             map_data[
                 "last_clicked"
             ]["lat"]
         )
+
         clicked_lon = (
             map_data[
                 "last_clicked"
             ]["lng"]
         )
+
         st.session_state[
             "punto_seleccionado"
         ] = (
             clicked_lat,
             clicked_lon
         )
+
+
     punto_seleccionado = (
         st.session_state.get(
             "punto_seleccionado"
         )
     )
+
+
     if punto_seleccionado is not None:
+
         clicked_lat = (
             punto_seleccionado[0]
         )
+
         clicked_lon = (
             punto_seleccionado[1]
         )
+
+
         estimated_wind, distance_nm, quadrant = (
             calcular_viento_en_punto(
                 clicked_lat,
@@ -814,16 +1041,22 @@ with col1:
                 r64_nw
             )
         )
+
+
         estimated_category = (
             get_category(
                 estimated_wind
             )
         )
+
+
         estimated_mph = (
             estimated_wind
             *
             1.15078
         )
+
+
         angle = np.degrees(
             np.arctan2(
                 (
@@ -842,30 +1075,48 @@ with col1:
                 lat
             )
         )
+
+
         if angle < 0:
+
             angle += 360
+
+
         st.info(
             f"""
 📍 **Punto seleccionado**
+
 **Latitud:** {clicked_lat:.4f}°
+
 **Longitud:** {clicked_lon:.4f}°
+
 **Distancia al centro:** {distance_nm:.1f} NM
 ({distance_nm * 1.15078:.1f} millas)
+
 **Dirección desde el centro:** {angle:.0f}°
+
 **Cuadrante:** {quadrant}
 """
         )
+
+
         st.success(
             f"""
 💨 **VIENTO ESTIMADO ACTUAL**
+
 ### {estimated_mph:.0f} mph
+
 **Clasificación:** {estimated_category}
+
 *Estimación académica basada en la distancia al centro y los Wind Radii definidos.*
 """
         )
+
+
         # ==================================================
         # EVOLUCIÓN 72 HORAS
         # ==================================================
+
         progression_hours = list(
             range(
                 0,
@@ -873,15 +1124,23 @@ with col1:
                 1
             )
         )
+
         progression_wind_kt = []
+
         progression_wind_mph = []
+
         progression_distance = []
+
+
         for future_h in progression_hours:
+
             future_lat, future_lon = (
                 obtener_posicion_futura(
                     future_h
                 )
             )
+
+
             future_wind, future_distance, future_quadrant = (
                 calcular_viento_en_punto(
                     clicked_lat,
@@ -903,194 +1162,274 @@ with col1:
                     r64_nw
                 )
             )
+
+
             progression_wind_kt.append(
                 future_wind
             )
+
             progression_wind_mph.append(
                 future_wind
                 *
                 1.15078
             )
+
             progression_distance.append(
                 future_distance
             )
+
+
         max_wind_kt = max(
             progression_wind_kt
         )
+
         max_wind_mph = (
             max_wind_kt
             *
             1.15078
         )
+
         max_index = (
             progression_wind_kt.index(
                 max_wind_kt
             )
         )
+
         max_hour = (
             progression_hours[
                 max_index
             ]
         )
+
+
         st.subheader(
             "📈 Evolución del viento"
         )
+
+
         st.write(
             "El punto permanece fijo mientras el centro "
             "del ciclón sigue la trayectoria definida."
         )
+
+
         fig, ax = plt.subplots(
             figsize=(9, 4.5)
         )
+
+
         ax.plot(
             progression_hours,
             progression_wind_mph,
             linewidth=2
         )
+
+
         ax.axhline(
             34 * 1.15078,
             linestyle="--",
             linewidth=1
         )
+
         ax.axhline(
             50 * 1.15078,
             linestyle="--",
             linewidth=1
         )
+
         ax.axhline(
             64 * 1.15078,
             linestyle="--",
             linewidth=1
         )
+
+
         ax.axvline(
             max_hour,
             linestyle=":",
             linewidth=1
         )
+
+
         ax.set_xlabel(
             "Horas desde la posición inicial"
         )
+
         ax.set_ylabel(
             "Viento sostenido (mph)"
         )
+
         ax.set_title(
             "Evolución del viento en el punto seleccionado"
         )
+
         ax.grid(
             True,
             alpha=0.3
         )
+
+
         st.pyplot(
             fig,
             use_container_width=True
         )
+
+
         st.metric(
             "💨 Viento máximo esperado",
             f"{max_wind_mph:.0f} mph",
             f"en +{max_hour} horas"
         )
+
+
         def encontrar_periodo(
             horas,
             vientos,
             umbral
         ):
+
             horas_dentro = []
+
             for h, viento in zip(
                 horas,
                 vientos
             ):
+
                 if viento >= umbral:
+
                     horas_dentro.append(
                         h
                     )
+
             if not horas_dentro:
+
                 return None, None
+
             return (
                 min(horas_dentro),
                 max(horas_dentro)
             )
+
+
         entrada34, salida34 = encontrar_periodo(
             progression_hours,
             progression_wind_kt,
             34
         )
+
         entrada50, salida50 = encontrar_periodo(
             progression_hours,
             progression_wind_kt,
             50
         )
+
         entrada64, salida64 = encontrar_periodo(
             progression_hours,
             progression_wind_kt,
             64
         )
+
+
         st.subheader(
             "🌀 Periodos de viento"
         )
+
+
         periodos = {
+
             "34 kt — Tormenta Tropical": (
                 entrada34,
                 salida34
             ),
+
             "50 kt": (
                 entrada50,
                 salida50
             ),
+
             "64 kt — Huracán": (
                 entrada64,
                 salida64
             )
         }
+
+
         for nombre_umbral, periodo in periodos.items():
+
             entrada, salida = periodo
+
             if entrada is not None:
+
                 st.write(
                     f"**{nombre_umbral}:** "
                     f"entrada +{entrada} h → "
                     f"salida +{salida} h"
                 )
+
             else:
+
                 st.write(
                     f"**{nombre_umbral}:** "
                     "No alcanza este umbral."
                 )
+
+
         # ==================================================
         # SIMULACIÓN DE 24 HORAS
         # ==================================================
+
         st.markdown("---")
+
         st.subheader(
             "🎬 Simulación de las próximas 24 horas"
         )
+
         st.write(
             "Selecciona un punto en el mapa y observa "
             "cómo el campo de viento se desplaza sobre él."
         )
+
+
         if "ejecutar_animacion_24h" not in st.session_state:
+
             st.session_state[
                 "ejecutar_animacion_24h"
             ] = False
+
+
         if st.button(
             "▶️ Simular próximas 24 horas",
             type="primary"
         ):
+
             st.session_state[
                 "ejecutar_animacion_24h"
             ] = True
+
+
         if st.session_state[
             "ejecutar_animacion_24h"
         ]:
+
             punto_fijo_lat = clicked_lat
             punto_fijo_lon = clicked_lon
+
+
             animation_frames = []
+
+
             for future_h in range(
                 0,
                 25
             ):
+
                 future_lat, future_lon = (
                     obtener_posicion_futura(
                         future_h
                     )
                 )
+
+
                 future_wind, future_distance, future_quadrant = (
                     calcular_viento_en_punto(
                         punto_fijo_lat,
@@ -1112,16 +1451,22 @@ with col1:
                         r64_nw
                     )
                 )
+
+
                 future_category = (
                     get_category(
                         future_wind
                     )
                 )
+
+
                 future_wind_mph = (
                     future_wind
                     *
                     1.15078
                 )
+
+
                 wind34_future = create_wind_field(
                     future_lon,
                     future_lat,
@@ -1132,6 +1477,8 @@ with col1:
                         r34_nw
                     ]
                 )
+
+
                 wind50_future = create_wind_field(
                     future_lon,
                     future_lat,
@@ -1142,6 +1489,8 @@ with col1:
                         r50_nw
                     ]
                 )
+
+
                 wind64_future = create_wind_field(
                     future_lon,
                     future_lat,
@@ -1152,6 +1501,8 @@ with col1:
                         r64_nw
                     ]
                 )
+
+
                 animation_frames.append(
                     {
                         "hour": future_h,
@@ -1173,9 +1524,12 @@ with col1:
                         )
                     }
                 )
+
+
             # ==================================================
             # MAPA DE ANIMACIÓN
             # ==================================================
+
             mapa_animacion = folium.Map(
                 location=[
                     lat,
@@ -1184,6 +1538,8 @@ with col1:
                 zoom_start=5,
                 tiles="OpenStreetMap"
             )
+
+
             folium.GeoJson(
                 mapping(
                     cone_geom
@@ -1197,6 +1553,8 @@ with col1:
             ).add_to(
                 mapa_animacion
             )
+
+
             folium.PolyLine(
                 locations=list(
                     zip(
@@ -1210,11 +1568,14 @@ with col1:
             ).add_to(
                 mapa_animacion
             )
+
+
             for h, tx, ty in zip(
                 forecast_hours,
                 track_lons,
                 track_lats
             ):
+
                 folium.CircleMarker(
                     location=[
                         ty,
@@ -1230,13 +1591,12 @@ with col1:
                 ).add_to(
                     mapa_animacion
                 )
+
+
             # ==================================================
             # CAMPOS DE VIENTO
-            #
-            # IMPORTANTE:
-            # Solo existe UNA copia de cada campo.
-            # JavaScript modifica estas capas.
             # ==================================================
+
             wind34_layer = folium.GeoJson(
                 mapping(
                     wind34
@@ -1247,9 +1607,12 @@ with col1:
                     "fillOpacity": 0
                 }
             )
+
             wind34_layer.add_to(
                 mapa_animacion
             )
+
+
             wind50_layer = folium.GeoJson(
                 mapping(
                     wind50
@@ -1260,9 +1623,12 @@ with col1:
                     "fillOpacity": 0
                 }
             )
+
             wind50_layer.add_to(
                 mapa_animacion
             )
+
+
             wind64_layer = folium.GeoJson(
                 mapping(
                     wind64
@@ -1273,12 +1639,16 @@ with col1:
                     "fillOpacity": 0
                 }
             )
+
             wind64_layer.add_to(
                 mapa_animacion
             )
+
+
             # ==================================================
             # CENTRO MÓVIL
             # ==================================================
+
             center_marker = folium.CircleMarker(
                 location=[
                     lat,
@@ -1296,9 +1666,12 @@ with col1:
             ).add_to(
                 mapa_animacion
             )
+
+
             # ==================================================
             # PUNTO AZUL FIJO
             # ==================================================
+
             folium.CircleMarker(
                 location=[
                     punto_fijo_lat,
@@ -1314,6 +1687,8 @@ with col1:
             ).add_to(
                 mapa_animacion
             )
+
+
             mapa_animacion.fit_bounds([
                 [
                     min(track_lats) - 6,
@@ -1324,112 +1699,171 @@ with col1:
                     max(track_lons) + 6
                 ]
             ])
+
+
+            # ==================================================
+            # VARIABLES JAVASCRIPT
+            # ==================================================
+
             frames_json = json.dumps(
                 animation_frames
             )
-            map_name = (
-                mapa_animacion.get_name()
-            )
-            wind34_name = (
-                wind34_layer.get_name()
-            )
-            wind50_name = (
-                wind50_layer.get_name()
-            )
-            wind64_name = (
-                wind64_layer.get_name()
-            )
-            center_marker_name = (
-                center_marker.get_name()
-            )
+
+            map_name = mapa_animacion.get_name()
+            wind34_name = wind34_layer.get_name()
+            wind50_name = wind50_layer.get_name()
+            wind64_name = wind64_layer.get_name()
+            center_marker_name = center_marker.get_name()
+
+
             # ==================================================
             # JAVASCRIPT
+            #
+            # IMPORTANTE:
+            # Ya NO usamos f-string para este bloque.
+            # Así evitamos el error:
+            # SyntaxError: f-string: single '}' is not allowed
             # ==================================================
-            animation_script = f"""
-(function() {{
-    var mapAnimation = {map_name};
-    var wind34Layer = {wind34_name};
-    var wind50Layer = {wind50_name};
-    var wind64Layer = {wind64_name};
-    var centerMarker = {center_marker_name};
-    var frames = {frames_json};
+
+            animation_script = """
+(function() {
+
+    var mapAnimation = MAP_NAME;
+    var wind34Layer = WIND34_NAME;
+    var wind50Layer = WIND50_NAME;
+    var wind64Layer = WIND64_NAME;
+    var centerMarker = CENTER_MARKER_NAME;
+
+    var frames = FRAMES_JSON;
+
     var frameIndex = 0;
     var animationTimer = null;
+
+
     // ======================================================
     // PANEL DE INFORMACIÓN
     // ======================================================
-    var infoControl = L.control({{
+
+    var infoControl = L.control({
         position: "topright"
-    }});
-    infoControl.onAdd = function(map) {{
+    });
+
+
+    infoControl.onAdd = function(map) {
+
         var div = L.DomUtil.create(
             "div",
             "animation-info-control"
         );
+
+
         div.id = "animation-info";
+
+
         div.style.background = "white";
+
         div.style.padding = "12px 15px";
+
         div.style.borderRadius = "8px";
+
         div.style.boxShadow =
             "0 2px 8px rgba(0,0,0,0.30)";
+
         div.style.fontFamily =
             "Arial, sans-serif";
+
         div.style.fontSize =
             "14px";
+
         div.style.lineHeight =
             "1.5";
+
         div.style.minWidth =
             "230px";
+
+
         div.innerHTML =
             "<b>🎬 Simulación 24 horas</b><br>" +
             "<span id='anim-hour'>Preparando...</span>";
+
+
         L.DomEvent.disableClickPropagation(div);
+
+
         return div;
-    }};
+
+    };
+
+
     infoControl.addTo(
         mapAnimation
     );
+
+
     // ======================================================
     // ACTUALIZAR FRAME
     // ======================================================
-    function renderFrame(index) {{
+
+    function renderFrame(index) {
+
         var frame = frames[index];
+
+
         // ----------------------------------------------
         // MOVER CENTRO
         // ----------------------------------------------
+
         centerMarker.setLatLng([
             frame.lat,
             frame.lon
         ]);
+
+
         // ----------------------------------------------
         // ACTUALIZAR 34 KT
         // ----------------------------------------------
+
         wind34Layer.clearLayers();
+
         wind34Layer.addData(
             frame.wind34
         );
+
+
         // ----------------------------------------------
         // ACTUALIZAR 50 KT
         // ----------------------------------------------
+
         wind50Layer.clearLayers();
+
         wind50Layer.addData(
             frame.wind50
         );
+
+
         // ----------------------------------------------
         // ACTUALIZAR 64 KT
         // ----------------------------------------------
+
         wind64Layer.clearLayers();
+
         wind64Layer.addData(
             frame.wind64
         );
+
+
         // ----------------------------------------------
         // INFORMACIÓN
         // ----------------------------------------------
+
         var info =
             document.getElementById(
                 "animation-info"
             );
-        if (info) {{
+
+
+        if (info) {
+
             info.innerHTML =
                 "<b>🎬 Simulación 24 horas</b><br>" +
                 "⏱️ <b>+" +
@@ -1451,76 +1885,155 @@ with col1:
                 "<br>" +
                 "🧭 Cuadrante: " +
                 frame.quadrant;
-        }}
-    }}
+
+        }
+
+    }
+
+
     // ======================================================
     // PRIMER FRAME
     // ======================================================
+
     renderFrame(0);
+
+
     // ======================================================
     // ANIMACIÓN
     // ======================================================
+
     animationTimer = setInterval(
-        function() {{
+        function() {
+
             frameIndex += 1;
+
+
             if (
                 frameIndex >= frames.length
-            ) {{
+            ) {
+
                 clearInterval(
                     animationTimer
                 );
+
+
                 frameIndex =
                     frames.length - 1;
+
+
                 var info =
                     document.getElementById(
                         "animation-info"
                     );
-                if (info) {{
+
+
+                if (info) {
+
                     info.innerHTML +=
                         "<br><b>✅ Simulación completada</b>";
-                }}
+
+                }
+
+
                 return;
+
             }
+
+
             renderFrame(
                 frameIndex
             );
-        }},
+
+        },
         500
     );
-}})();
+
+
+})();
 """
+
+
+            # ==================================================
+            # INSERTAR VARIABLES
+            # ==================================================
+
+            animation_script = (
+                animation_script
+                .replace(
+                    "MAP_NAME",
+                    map_name
+                )
+                .replace(
+                    "WIND34_NAME",
+                    wind34_name
+                )
+                .replace(
+                    "WIND50_NAME",
+                    wind50_name
+                )
+                .replace(
+                    "WIND64_NAME",
+                    wind64_name
+                )
+                .replace(
+                    "CENTER_MARKER_NAME",
+                    center_marker_name
+                )
+                .replace(
+                    "FRAMES_JSON",
+                    frames_json
+                )
+            )
+
+
             mapa_animacion.get_root().script.add_child(
                 Element(
                     animation_script
                 )
             )
+
+
             st.caption(
                 "La animación avanza a razón de 1 hora cada 0.5 segundos."
             )
+
+
             st_folium(
                 mapa_animacion,
                 width=None,
                 height=600,
                 key="mapa_animacion_24h"
             )
+
+
 # ==========================================================
 # COLUMNA DERECHA
 # ==========================================================
+
 with col2:
+
     st.subheader(
         "Boletín de Advertencia"
     )
+
+
     st.markdown(
         f"""
 **SISTEMA:** {name}  
+
 **CLASIFICACIÓN:** {category_str}  
+
 **UBICACIÓN ACTUAL:** {lat:.1f}°N {abs(lon):.1f}°W  
+
 **VIENTOS MÁXIMOS:** {wind_speed} nudos
 (~{int(wind_speed * 1.852)} km/h)  
+
 **MOVIMIENTO ACTUAL:** Rumbo {heading}°
 a {forward_speed} kt
 """
     )
+
+
     st.info(
         "Nota didáctica: El cono representa el área "
         "probable del centro del ciclón en las próximas "
