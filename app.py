@@ -319,6 +319,7 @@ def create_wind_field(center_lon, center_lat, radii):
 
     return Polygon(coordinates)
 
+
 def calcular_viento_en_punto(
     point_lat,
     point_lon,
@@ -427,6 +428,8 @@ def calcular_viento_en_punto(
     )
 
     return estimated_wind, distance_nm, quadrant
+
+
 forecast_hours = [0, 12, 24, 36, 48, 72]
 nhc_radii_deg = [0.0, 0.45, 0.75, 1.10, 1.45, 2.10]
 
@@ -570,131 +573,18 @@ with col1:
         clicked_lat = map_data["last_clicked"]["lat"]
         clicked_lon = map_data["last_clicked"]["lng"]
 
-        # Distancia al centro en millas náuticas
-        lat_diff = clicked_lat - lat
-        lon_diff = clicked_lon - lon
+        # Viento actual en el punto seleccionado
 
-        distance_nm = np.sqrt(
-            (lat_diff * 60.0) ** 2
-            +
-            (
-                lon_diff
-                * 60.0
-                * np.cos(np.radians(lat))
-            ) ** 2
-        )
-
-        # Dirección desde el centro
-        angle = np.degrees(
-            np.arctan2(
-                lon_diff
-                * np.cos(np.radians(lat)),
-                lat_diff
-            )
-        )
-
-        if angle < 0:
-            angle += 360
-
-        # Cuadrante
-        if 0 <= angle < 90:
-
-            quadrant = "NE"
-            r34 = r34_ne
-            r50 = r50_ne
-            r64 = r64_ne
-
-        elif 90 <= angle < 180:
-
-            quadrant = "SE"
-            r34 = r34_se
-            r50 = r50_se
-            r64 = r64_se
-
-        elif 180 <= angle < 270:
-
-            quadrant = "SW"
-            r34 = r34_sw
-            r50 = r50_sw
-            r64 = r64_sw
-
-        else:
-
-            quadrant = "NW"
-            r34 = r34_nw
-            r50 = r50_nw
-            r64 = r64_nw
-
-        # Estimación del viento
-
-        if distance_nm <= r64 and r64 > 0:
-
-            fraction = distance_nm / r64
-
-            estimated_wind = (
-                wind_speed
-                - (
-                    wind_speed - 64
-                ) * fraction
-            )
-
-        elif distance_nm <= r50 and r50 > r64:
-
-            fraction = (
-                distance_nm - r64
-            ) / (
-                r50 - r64
-            )
-
-            estimated_wind = (
-                64
-                - 14 * fraction
-            )
-
-        elif distance_nm <= r34 and r34 > r50:
-
-            fraction = (
-                distance_nm - r50
-            ) / (
-                r34 - r50
-            )
-
-            estimated_wind = (
-                50
-                - 16 * fraction
-            )
-
-        elif distance_nm <= r34 and r34 > 0:
-
-            estimated_wind = 34
-
-        else:
-
-            if r34 > 0:
-
-                estimated_wind = (
-                    34
-                    *
-                    max(
-                        0,
-                        1
-                        -
-                        (
-                            distance_nm
-                            - r34
-                        ) / 50
-                    )
-                )
-
-            else:
-
-                estimated_wind = 0
-
-        estimated_wind = max(
-            0,
-            min(
+        estimated_wind, distance_nm, quadrant = (
+            calcular_viento_en_punto(
+                clicked_lat,
+                clicked_lon,
+                lat,
+                lon,
                 wind_speed,
-                estimated_wind
+                r34_ne, r34_se, r34_sw, r34_nw,
+                r50_ne, r50_se, r50_sw, r50_nw,
+                r64_ne, r64_se, r64_sw, r64_nw
             )
         )
 
@@ -702,10 +592,20 @@ with col1:
             estimated_wind
         )
 
-        # Conversión de nudos a MPH
         estimated_mph = (
             estimated_wind * 1.15078
         )
+
+        angle = np.degrees(
+            np.arctan2(
+                (clicked_lon - lon)
+                * np.cos(np.radians(lat)),
+                clicked_lat - lat
+            )
+        )
+
+        if angle < 0:
+            angle += 360
 
         st.info(
             f"""
@@ -726,7 +626,7 @@ with col1:
 
         st.success(
             f"""
-💨 **VIENTO ESTIMADO**
+💨 **VIENTO ESTIMADO ACTUAL**
 
 ### {estimated_mph:.0f} mph
 
@@ -735,6 +635,252 @@ with col1:
 *Estimación académica basada en la distancia al centro y los Wind Radii definidos.*
 """
         )
+
+        # ==========================================================
+        # EVOLUCIÓN DEL VIENTO EN EL PUNTO SELECCIONADO
+        # ==========================================================
+
+        progression_hours = list(
+            range(0, 73, 1)
+        )
+
+        progression_wind_kt = []
+        progression_wind_mph = []
+        progression_distance = []
+
+        for future_h in progression_hours:
+
+            # MISMA TRAYECTORIA DEL SIMULADOR
+
+            dist_nm_travel = (
+                forward_speed * future_h
+            )
+
+            dist_deg_travel = (
+                dist_nm_travel / 60.0
+            )
+
+            future_lon = (
+                lon
+                + dist_deg_travel
+                * np.cos(rad_heading)
+            )
+
+            future_lat = (
+                lat
+                + dist_deg_travel
+                * np.sin(rad_heading)
+            )
+
+            future_wind, future_distance, future_quadrant = (
+                calcular_viento_en_punto(
+                    clicked_lat,
+                    clicked_lon,
+                    future_lat,
+                    future_lon,
+                    wind_speed,
+                    r34_ne, r34_se, r34_sw, r34_nw,
+                    r50_ne, r50_se, r50_sw, r50_nw,
+                    r64_ne, r64_se, r64_sw, r64_nw
+                )
+            )
+
+            progression_wind_kt.append(
+                future_wind
+            )
+
+            progression_wind_mph.append(
+                future_wind * 1.15078
+            )
+
+            progression_distance.append(
+                future_distance
+            )
+
+        # ==========================================================
+        # VIENTO MÁXIMO
+        # ==========================================================
+
+        max_wind_kt = max(
+            progression_wind_kt
+        )
+
+        max_wind_mph = (
+            max_wind_kt * 1.15078
+        )
+
+        max_index = progression_wind_kt.index(
+            max_wind_kt
+        )
+
+        max_hour = progression_hours[
+            max_index
+        ]
+
+        st.subheader(
+            "📈 Evolución del viento"
+        )
+
+        st.write(
+            "El punto permanece fijo mientras el centro del ciclón "
+            "sigue la trayectoria definida por el simulador."
+        )
+
+        # ==========================================================
+        # GRÁFICO
+        # ==========================================================
+
+        fig, ax = plt.subplots(
+            figsize=(9, 4.5)
+        )
+
+        ax.plot(
+            progression_hours,
+            progression_wind_mph,
+            linewidth=2
+        )
+
+        ax.axhline(
+            34 * 1.15078,
+            linestyle="--",
+            linewidth=1
+        )
+
+        ax.axhline(
+            50 * 1.15078,
+            linestyle="--",
+            linewidth=1
+        )
+
+        ax.axhline(
+            64 * 1.15078,
+            linestyle="--",
+            linewidth=1
+        )
+
+        ax.axvline(
+            max_hour,
+            linestyle=":",
+            linewidth=1
+        )
+
+        ax.set_xlabel(
+            "Horas desde la posición inicial"
+        )
+
+        ax.set_ylabel(
+            "Viento sostenido (mph)"
+        )
+
+        ax.set_title(
+            "Evolución del viento en el punto seleccionado"
+        )
+
+        ax.grid(
+            True,
+            alpha=0.3
+        )
+
+        st.pyplot(
+            fig,
+            use_container_width=True
+        )
+
+        # ==========================================================
+        # MÁXIMO ESPERADO
+        # ==========================================================
+
+        st.metric(
+            "💨 Viento máximo esperado",
+            f"{max_wind_mph:.0f} mph",
+            f"en +{max_hour} horas"
+        )
+
+        # ==========================================================
+        # ENTRADA Y SALIDA DE CADA UMBRAL
+        # ==========================================================
+
+        def encontrar_periodo(
+            horas,
+            vientos,
+            umbral
+        ):
+
+            horas_dentro = []
+
+            for h, viento in zip(
+                horas,
+                vientos
+            ):
+
+                if viento >= umbral:
+                    horas_dentro.append(h)
+
+            if not horas_dentro:
+                return None, None
+
+            return (
+                min(horas_dentro),
+                max(horas_dentro)
+            )
+
+
+        entrada34, salida34 = encontrar_periodo(
+            progression_hours,
+            progression_wind_kt,
+            34
+        )
+
+        entrada50, salida50 = encontrar_periodo(
+            progression_hours,
+            progression_wind_kt,
+            50
+        )
+
+        entrada64, salida64 = encontrar_periodo(
+            progression_hours,
+            progression_wind_kt,
+            64
+        )
+
+        st.subheader(
+            "🌀 Periodos de viento"
+        )
+
+        periodos = {
+            "34 kt — Tormenta Tropical": (
+                entrada34,
+                salida34
+            ),
+            "50 kt": (
+                entrada50,
+                salida50
+            ),
+            "64 kt — Huracán": (
+                entrada64,
+                salida64
+            )
+        }
+
+        for nombre_umbral, periodo in periodos.items():
+
+            entrada, salida = periodo
+
+            if entrada is not None:
+
+                st.write(
+                    f"**{nombre_umbral}:** "
+                    f"entrada +{entrada} h → "
+                    f"salida +{salida} h"
+                )
+
+            else:
+
+                st.write(
+                    f"**{nombre_umbral}:** "
+                    "No alcanza este umbral."
+                )
+
 
 with col2:
 
